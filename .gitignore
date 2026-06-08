@@ -1,5 +1,8 @@
-# --- Dados brutos (grandes / de terceiros) — obter conforme o README ---
-Dados_brutos/
+# --- Dados brutos GRANDES (excedem o limite de 100 MB/arquivo do GitHub) ---
+#     Obter conforme o README (BR-DWGD). O clima diario ja extraido (FINAL.rds)
+#     esta versionado, entao a pipeline roda sem estes arquivos.
+Dados_brutos/dados_clima/raw/
+Dados_brutos/dados_pop/atlasivs_dadosbrutos_pt_v2.xlsx
 
 # --- Materiais NAO relacionados a analise atual (artigo anterior, parecer etc.) ---
 repo_original/
