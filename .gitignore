@@ -1,0 +1,19 @@
+# --- Dados brutos (grandes / de terceiros) — obter conforme o README ---
+Dados_brutos/
+
+# --- Materiais NAO relacionados a analise atual (artigo anterior, parecer etc.) ---
+repo_original/
+_artigo_tmp/
+artigo_texto.txt
+decisao_revista.txt
+dicionario_dados.txt
+
+# --- Arquivos locais do R / RStudio ---
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata/
+*.Rproj
+
+# --- Config local de ferramentas ---
+.claude/
