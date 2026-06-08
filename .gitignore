@@ -20,3 +20,6 @@ dicionario_dados.txt
 
 # --- Config local de ferramentas ---
 .claude/
+
+# Resposta aos revisores (cita o parecer — manter fora do repositorio publico)
+RESPOSTA_AO_PARECER.md
