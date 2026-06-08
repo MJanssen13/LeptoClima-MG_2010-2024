@@ -1,0 +1,7 @@
+"Variavel","IRR_confirmados","IRR_notificados","Moran_bivariado"
+"Precipitacao","1.36 (1.31-1.41)***","1.18 (1.16-1.21)***","0.24**"
+"Temperatura","1.25 (1.18-1.33)***","1.18 (1.15-1.22)***","-0.28**"
+"IVS",NA,NA,"-0.20**"
+"Esgoto",NA,NA,"0.09**"
+"Agua",NA,NA,"-0.01ns"
+"Lixo",NA,NA,"0.17**"
