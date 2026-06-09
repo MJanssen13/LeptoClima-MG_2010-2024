@@ -38,6 +38,7 @@ Dados_brutos/        Dados brutos (parcialmente versionados — ver "Fontes de d
 | 15 | `15_extrai_clima_extra.R` | Extrai RH, Rs, u2 e ETo (BR-DWGD) por município | `mg_clima_extra_diario.rds` |
 | 16 | `16_variaveis_extras_espacial.R` | Adiciona clima extra + densidade à base espacial e calcula o Moran bivariado | `dados_espaciais_municipal` (atualizado) |
 | 17 | `17_caracterizacao_casos.R` | Caracterização descritiva dos casos (sexo, idade, raça/cor, evolução/letalidade, hospitalização, antecedentes, tendência anual Mann-Kendall e sazonalidade) | console |
+| 18 | `18_sensibilidade.R` | Sensibilidade: regionalização (mesorregião × macrorregião de saúde, PDR/SES-MG) e defasagem temporal (2 SE × 0 SE) | `lookup_macrorregiao_saude`, `sensibilidade` |
 
 Os scripts 01–05 reconstroem os bancos a partir dos dados brutos. Como os bancos
 processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
