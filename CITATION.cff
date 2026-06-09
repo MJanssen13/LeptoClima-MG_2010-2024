@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "Se utilizar estes dados ou códigos, por favor cite conforme abaixo."
+title: "LeptoClima-MG: dados e códigos — Fatores climáticos e socioambientais associados à incidência de leptospirose em Minas Gerais, Brasil, 2010–2024"
+type: software
+version: v1.0.0
+date-released: "2026-06-09"
+license: CC-BY-4.0
+repository-code: "https://github.com/MJanssen13/LeptoClima-MG_2010-2024"
+authors:
+  - family-names: Janssen
+    given-names: Miguel Antonio
+    orcid: "https://orcid.org/0009-0000-1484-7075"
+  - family-names: Fernandes
+    given-names: Ana Paula
+    orcid: "https://orcid.org/0000-0002-9974-0230"
+  - family-names: Resende
+    given-names: Eduardo Soares
+    orcid: "https://orcid.org/0009-0000-1720-5027"
+keywords:
+  - leptospirose
+  - clima
+  - análise espacial
+  - Minas Gerais
+  - epidemiologia
+  - reprodutibilidade

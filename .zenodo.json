@@ -1,0 +1,19 @@
+{
+    "upload_type": "software",
+    "title": "LeptoClima-MG: dados e códigos — Fatores climáticos e socioambientais associados à incidência de leptospirose em Minas Gerais, Brasil, 2010–2024",
+    "description": "Códigos de análise em R e bancos de dados processados do estudo ecológico sobre a associação espacial e temporal entre fatores climáticos e socioambientais e a incidência de leptospirose nos 853 municípios e 12 mesorregiões de Minas Gerais, Brasil, de 2010 a 2024. Inclui o pipeline reprodutível (tratamento de casos do SINAN, população e malha do IBGE, clima da base BR-DWGD, saneamento do Censo 2022 e vulnerabilidade social do Atlas/IPEA; análise descritiva; análise temporal por correlação de Kendall e regressão Binomial Negativa; análise espacial pela estatística de Moran global, bivariada e local [LISA]; análises de sensibilidade; e geração de tabelas e figuras), os bancos processados (.rds) e as figuras resultantes. Os dados brutos (arquivos .dbc do SINAN e grades NetCDF do BR-DWGD) não estão incluídos por excederem 100 MB por arquivo; sua obtenção está descrita no README. Análises realizadas em R 4.6.0. Material suplementar ao manuscrito submetido à revista Cadernos de Saúde Pública.",
+    "creators": [
+        { "name": "Janssen, Miguel Antonio", "orcid": "0009-0000-1484-7075" },
+        { "name": "Fernandes, Ana Paula", "orcid": "0000-0002-9974-0230" },
+        { "name": "Resende, Eduardo Soares", "orcid": "0009-0000-1720-5027" }
+    ],
+    "keywords": [
+        "leptospirose", "clima", "precipitação", "análise espacial",
+        "autocorrelação espacial de Moran", "Minas Gerais", "SINAN",
+        "BR-DWGD", "epidemiologia", "reprodutibilidade"
+    ],
+    "license": "cc-by-4.0",
+    "access_right": "open",
+    "version": "v1.0.0",
+    "language": "por"
+}
