@@ -41,6 +41,7 @@ Dados_brutos/        Dados brutos (parcialmente versionados — ver "Fontes de d
 | 16 | `16_variaveis_extras_espacial.R` | Adiciona clima extra + densidade à base espacial e calcula o Moran bivariado | `dados_espaciais_municipal` (atualizado) |
 | 17 | `17_caracterizacao_casos.R` | Caracterização descritiva dos casos (sexo, idade, raça/cor, evolução/letalidade, hospitalização, antecedentes, tendência anual Mann-Kendall e sazonalidade) | console |
 | 18 | `18_sensibilidade.R` | Sensibilidade: regionalização (mesorregião × macrorregião de saúde, PDR/SES-MG) e defasagem temporal (2 SE × 0 SE) | `lookup_macrorregiao_saude`, `sensibilidade` |
+| 19 | `19_figura3_combinada.R` | Monta a Figura 3 (painel duplo: mapa do LISA bivariado + diagrama de dispersão de Moran) | figura |
 | 19 | `19_analises_complementares.R` | Complementares: BN com termo sazonal (R3) e modelo de erro espacial multivariável (R4) | `analises_complementares` |
 
 Os scripts 01–05 reconstroem os bancos a partir dos dados brutos. Como os bancos

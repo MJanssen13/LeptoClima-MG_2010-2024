@@ -6,7 +6,7 @@
 # Saida: ARTIGO_REVISADO.docx
 # =============================================================================
 options(repos = c(CRAN = "https://cloud.r-project.org"))
-for (p in c("officer","flextable")) if (!requireNamespace(p, quietly = TRUE)) install.packages(p)
+for (p in c("officer","flextable","png")) if (!requireNamespace(p, quietly = TRUE)) install.packages(p)
 suppressMessages({library(officer); library(flextable)})
 
 md <- readLines("ARTIGO_REVISADO.md", warn = FALSE, encoding = "UTF-8")
@@ -22,7 +22,7 @@ tnr_t   <- fp_text(font.family = "Times New Roman", font.size = 14, bold = TRUE)
 ftst    <- function(ft) autofit(fontsize(font(ft, fontname = "Times New Roman", part = "all"), size = 9, part = "all"))
 figmap  <- c("Figura 1" = "Resultados/Figuras/fig_serie_temporal.png",
              "Figura 2" = "Resultados/Figuras/mapa_incidencia_confirmados.png",
-             "Figura 3" = "Resultados/Figuras/mapa_lisa_confirmados.png")
+             "Figura 3" = "Resultados/Figuras/fig3_lisa_biv_scatter.png")
 
 # Paragrafo com citacoes [n]/[n,m] renderizadas em sobrescrito (sem colchetes)
 mk_par <- function(txt, base = tnr) {
@@ -50,7 +50,8 @@ for (l in md) {
   else if (grepl("^\\*\\*Figura [123]\\.", l)) {
     doc <- body_add_fpar(doc, mk_par(l))
     fn <- regmatches(l, regexpr("Figura [123]", l))
-    if (file.exists(figmap[[fn]])) doc <- body_add_img(doc, figmap[[fn]], width = 6.2, height = if (fn == "Figura 1") 3.1 else 4.8)
+    if (file.exists(figmap[[fn]])) { d <- dim(png::readPNG(figmap[[fn]]))   # preserva a proporcao
+      doc <- body_add_img(doc, figmap[[fn]], width = 6.2, height = round(6.2 * d[1] / d[2], 2)) }
   }
   else doc <- body_add_fpar(doc, mk_par(l))
 }
