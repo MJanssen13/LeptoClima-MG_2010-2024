@@ -31,7 +31,7 @@ for (l in md) {
   else if (grepl("^\\*\\*Figura [123]\\.", l)) {
     doc <- body_add_fpar(doc, fpar(ftext(clean(l), tnr)))
     fn <- regmatches(l, regexpr("Figura [123]", l))
-    if (file.exists(figmap[[fn]])) doc <- body_add_img(doc, figmap[[fn]], width = 6.2, height = if (fn == "Figura 1") 4.1 else 4.8)
+    if (file.exists(figmap[[fn]])) doc <- body_add_img(doc, figmap[[fn]], width = 6.2, height = if (fn == "Figura 1") 3.1 else 4.8)
   }
   else doc <- body_add_fpar(doc, fpar(ftext(clean(l), tnr)))
 }
