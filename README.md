@@ -1,6 +1,6 @@
 # LeptoClima-MG_2010-2024
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617304.svg)](https://doi.org/10.5281/zenodo.20617304) · Licença: [CC BY 4.0](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617304.svg)](https://doi.org/10.5281/zenodo.20617304) [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
 
 Associação entre o clima (precipitação, temperatura, umidade relativa, radiação
 solar, vento e evapotranspiração), a densidade demográfica e a incidência de
