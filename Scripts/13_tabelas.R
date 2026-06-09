@@ -6,6 +6,7 @@
 # =============================================================================
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 suppressMessages({library(dplyr); library(MASS); library(sf); library(spdep)})
+set.seed(1)  # reprodutibilidade do Moran por permutacao
 
 panel <- readRDS("Bancos_rds/dados_temporais.rds")
 popm  <- readRDS("Bancos_rds/pop_mesorregiao_2010_2024.rds")
@@ -41,13 +42,18 @@ nb <- poly2nb(muni, queen=TRUE); W <- nb2listw(nb, style="W", zero.policy=TRUE)
 bim <- function(x,y,nsim=999){ zx<-as.numeric(scale(x)); zy<-as.numeric(scale(y))
   Ixy<-function(zy){ly<-lag.listw(W,zy,zero.policy=TRUE); sum(zx*ly)/sum(zx^2)}; I<-Ixy(zy)
   perm<-replicate(nsim,Ixy(sample(zy))); c(I,(sum(abs(perm)>=abs(I))+1)/(nsim+1)) }
-labs <- c(precip="Precipitacao",temp="Temperatura",ivs="IVS",esgoto="Esgoto",agua="Agua",lixo="Lixo")
+labs <- c(precip="Precipitação", temp="Temperatura", rh="Umidade relativa", rs="Radiação solar",
+          u2="Velocidade do vento", eto="Evapotranspiração", logdens="Densidade demográfica (log)",
+          ivs="IVS", esgoto="Esgoto", agua="Água", lixo="Lixo")
 mb <- sapply(names(labs), function(v){ r<-bim(muni$inc_conf, muni[[v]]); sprintf("%.2f%s", r[1], st(r[2])) })
+irrc <- rep(NA_character_, length(labs)); irrn <- rep(NA_character_, length(labs))  # IRR so para clima precip/temp
+irrc[1] <- irr(mf,"pr_z"); irrc[2] <- irr(mf,"t_z")
+irrn[1] <- irr(mc,"pr_z"); irrn[2] <- irr(mc,"t_z")
 
 t2 <- data.frame(
-  Variavel = c("Precipitacao","Temperatura","IVS","Esgoto","Agua","Lixo"),
-  IRR_confirmados = c(irr(mf,"pr_z"), irr(mf,"t_z"), NA,NA,NA,NA),
-  IRR_notificados = c(irr(mc,"pr_z"), irr(mc,"t_z"), NA,NA,NA,NA),
+  Variavel = unname(labs),
+  IRR_confirmados = irrc,
+  IRR_notificados = irrn,
   Moran_bivariado = unname(mb))
 write.csv(t2, "Bancos_rds/tabela2.csv", row.names=FALSE)
 cat("\n=== TABELA 2 ===\n"); print(t2)
