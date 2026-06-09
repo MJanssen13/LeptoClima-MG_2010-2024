@@ -11,7 +11,7 @@ camada socioambiental (IVS e saneamento).
 ## Estrutura do repositório
 
 ```
-Scripts/             Código R — tratamento (01-05, 15), temporal (06-07), espacial (08-11, 16), tabelas/figuras (12-14)
+Scripts/             Código R — tratamento (01-05, 15), descritiva (17), temporal (06-07), espacial (08-11, 16), tabelas/figuras (12-14)
 Bancos_rds/          Bancos processados (.rds), prontos para análise
 Resultados/Figuras/  Mapas e diagramas (.png) gerados pelas análises espaciais
 Dados_brutos/        Dados brutos (parcialmente versionados — ver "Fontes de dados")
@@ -37,6 +37,7 @@ Dados_brutos/        Dados brutos (parcialmente versionados — ver "Fontes de d
 | 14 | `14_gerar_docx.R` | Gera o manuscrito em `.docx` (uso local; não versionado) | — |
 | 15 | `15_extrai_clima_extra.R` | Extrai RH, Rs, u2 e ETo (BR-DWGD) por município | `mg_clima_extra_diario.rds` |
 | 16 | `16_variaveis_extras_espacial.R` | Adiciona clima extra + densidade à base espacial e calcula o Moran bivariado | `dados_espaciais_municipal` (atualizado) |
+| 17 | `17_caracterizacao_casos.R` | Caracterização descritiva dos casos (sexo, idade, raça/cor, evolução/letalidade, hospitalização, antecedentes, tendência anual Mann-Kendall e sazonalidade) | console |
 
 Os scripts 01–05 reconstroem os bancos a partir dos dados brutos. Como os bancos
 processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
@@ -77,6 +78,7 @@ Rscript Scripts/10_mapas_extras.R
 Rscript Scripts/11_moran_scatterplots.R
 Rscript Scripts/12_figura_temporal.R
 Rscript Scripts/13_tabelas.R
+Rscript Scripts/17_caracterizacao_casos.R    # caracterizacao descritiva dos casos
 ```
 
 ## Software
