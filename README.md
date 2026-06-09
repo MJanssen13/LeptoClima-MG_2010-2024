@@ -89,3 +89,21 @@ Rscript Scripts/17_caracterizacao_casos.R    # caracterizacao descritiva dos cas
 R (≥ 4.6). Pacotes: `read.dbc`, `dplyr`, `tidyr`, `lubridate`, `sidrar`, `geobr`,
 `sf`, `terra`, `exactextractr`, `readxl`, `MASS`, `spdep`, `ggplot2`, `ggspatial`.
 A leitura dos `.dbc` do DATASUS (`read.dbc`) requer **Rtools** (compilação).
+
+## Licença
+
+Os códigos e os bancos processados deste repositório são distribuídos sob a licença
+**Creative Commons Atribuição 4.0 Internacional (CC BY 4.0)** — ver `LICENSE`. O uso,
+a redistribuição e a adaptação são livres, inclusive para fins comerciais, desde que
+citada a fonte. Os dados brutos originais permanecem sob os termos de suas fontes
+públicas (DATASUS/SINAN, BR-DWGD, IBGE e IPEA).
+
+## Como citar
+
+Ao utilizar estes dados ou códigos, cite o repositório (metadados em `CITATION.cff`):
+
+> Janssen MA, Resende ES, Fernandes AP. LeptoClima-MG: dados e códigos — Fatores
+> climáticos e socioambientais associados à incidência de leptospirose em Minas Gerais,
+> Brasil, 2010–2024. v1.0.0. Zenodo; 2026. [inserir DOI do Zenodo após o depósito]
+
+Quando publicado, cite também o artigo correspondente (submetido à *Cadernos de Saúde Pública*).
