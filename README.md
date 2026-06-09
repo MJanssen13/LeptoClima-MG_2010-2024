@@ -53,6 +53,7 @@ processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
 | **IBGE** | Estimativas e Censos (população, saneamento) | online via pacote `sidrar` |
 | **Malha territorial** | Municípios e mesorregiões de MG | online via pacote `geobr` |
 | **Atlas IPEA (IVS)** | Base Completa do IVS (`atlasivs_dadosbrutos_pt_v2 - MG.xlsx`) | `Dados_brutos/dados_pop/` — ivs.ipea.gov.br |
+| **SES-MG (PDR 2026)** | Regionalização de saúde (município → macrorregião de saúde) — sensibilidade (script 18) | `Dados_brutos/dados_pop/Planilha-de-Regionalizacao_SES-MG_2026.xlsx` — saude.mg.gov.br |
 
 > **Não versionados (excedem 100 MB/arquivo do GitHub):** as grades NetCDF do
 > BR-DWGD (`Dados_brutos/dados_clima/raw/*.nc`, ~2,7 GB cada). O clima diário já

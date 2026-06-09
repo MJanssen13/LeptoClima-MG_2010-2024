@@ -5,7 +5,7 @@
 # Saidas (console + rds): comparacao de incidencia por regiao, Kendall e IRR (BN).
 # =============================================================================
 options(repos = c(CRAN = "https://cloud.r-project.org"))
-suppressMessages({library(dplyr); library(lubridate); library(MASS); library(geobr); library(sf)})
+suppressMessages({library(dplyr); library(lubridate); library(MASS); library(readxl)})
 setwd("D:/Pesquisas/Leptospirose")
 st <- function(p) ifelse(is.na(p),"", ifelse(p<0.001,"***", ifelse(p<0.01,"**", ifelse(p<0.05,"*","ns"))))
 ktau <- function(x,y){ ok<-is.finite(x)&is.finite(y); if(sum(ok)<10) return(c(NA,NA))
@@ -13,13 +13,18 @@ ktau <- function(x,y){ ok<-is.finite(x)&is.finite(y); if(sum(ok)<10) return(c(NA
 irr <- function(m,v){ s<-summary(m)$coefficients[v,]; sprintf("%.2f (%.2f-%.2f)%s",
   exp(s[1]), exp(s[1]-1.96*s[2]), exp(s[1]+1.96*s[2]), st(s[4])) }
 
-# ---- Lookup municipio -> macrorregiao de saude (geobr / PDR) ----
-hr <- st_drop_geometry(read_health_region(year = 2013, simplified = TRUE, showProgress = FALSE))
-hr <- hr[hr$abbrev_state == "MG", ]
-macro_lk <- transmute(hr, cod = as.integer(code_muni), cod6 = as.integer(code_muni6),
-                      macro = as.character(name_health_macroregion))
+# ---- Lookup municipio -> macrorregiao de saude (PDR/SES-MG, versao 2026, oficial) ----
+#   Planilha de Regionalizacao da SES-MG: col 1 = Codigo IBGE (7 dig); col 2 = cod DATASUS (6 dig);
+#   col 9 = Macrorregiao de Saude. Cabecalho na linha 3 (skip=3 -> dados a partir da linha 4).
+fx <- "Dados_brutos/dados_pop/Planilha-de-Regionalizacao_SES-MG_2026.xlsx"
+x  <- suppressMessages(read_excel(fx, skip = 3, col_names = FALSE))
+macro_lk <- data.frame(cod  = suppressWarnings(as.integer(x[[1]])),
+                       cod6 = suppressWarnings(as.integer(x[[2]])),
+                       macro = trimws(as.character(x[[9]])))
+macro_lk <- macro_lk[!is.na(macro_lk$cod) & !is.na(macro_lk$macro) & macro_lk$macro != "", ]
 saveRDS(macro_lk, "Bancos_rds/lookup_macrorregiao_saude.rds")
-cat("== Macrorregioes de saude (MG):", length(unique(macro_lk$macro)), "==\n")
+cat("== Macrorregioes de saude (PDR/SES-MG 2026):", length(unique(macro_lk$macro)),
+    "| municipios:", nrow(macro_lk), "==\n")
 print(sort(unique(macro_lk$macro)))
 
 # ---- Reconstruir painel semanal por MACRORREGIAO DE SAUDE ----
