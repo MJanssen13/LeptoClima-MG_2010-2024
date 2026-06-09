@@ -10,12 +10,12 @@ authors:
   - family-names: Janssen
     given-names: Miguel Antonio
     orcid: "https://orcid.org/0009-0000-1484-7075"
-  - family-names: Fernandes
-    given-names: Ana Paula
-    orcid: "https://orcid.org/0000-0002-9974-0230"
   - family-names: Resende
     given-names: Eduardo Soares
     orcid: "https://orcid.org/0009-0000-1720-5027"
+  - family-names: Fernandes
+    given-names: Ana Paula
+    orcid: "https://orcid.org/0000-0002-9974-0230"
 keywords:
   - leptospirose
   - clima
