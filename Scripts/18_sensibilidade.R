@@ -89,5 +89,17 @@ cat("  [meso FE,  lag2] ", nb_irr(dt, 2)["prec"],    " | temp ", nb_irr(dt, 2)["
 cat("  [meso FE,  lag0] ", nb_irr(dt, 0)["prec"],    " | temp ", nb_irr(dt, 0)["temp"], "\n")
 cat("  [macroSaude FE, lag2] ", nb_irr(panel, 2)["prec"], " | temp ", nb_irr(panel, 2)["temp"], "\n")
 cat("  [macroSaude FE, lag0] ", nb_irr(panel, 0)["prec"], " | temp ", nb_irr(panel, 0)["temp"], "\n")
-saveRDS(list(incA=incA, kA=kA, est=est), "Bancos_rds/sensibilidade.rds")
+# ---- Viés de averiguacao: taxa de confirmacao (confirmados/notificados) por regiao ----
+conf_meso <- base |> group_by(name_meso) |>
+  summarise(noti = n(), conf = sum(confirmado %in% TRUE), .groups = "drop") |>
+  mutate(pconf = round(conf/noti*100, 1)) |> arrange(desc(pconf))
+cat("\n== Taxa de confirmacao por mesorregiao (viés de averiguacao) ==\n"); print(as.data.frame(conf_meso))
+t1 <- tryCatch(read.csv("Bancos_rds/tabela1.csv", fileEncoding = "UTF-8"), error = function(e) NULL)
+if (!is.null(t1)) {
+  cm <- left_join(conf_meso, t1[c("Mesorregiao","Incidencia_100mil")], by = c("name_meso"="Mesorregiao"))
+  cat("Amplitude %confirmados:", min(conf_meso$pconf), "a", max(conf_meso$pconf),
+      "| Spearman(%conf, incidencia):", round(cor(cm$pconf, cm$Incidencia_100mil, method="spearman"), 2), "\n")
+}
+
+saveRDS(list(incA=incA, kA=kA, est=est, conf_meso=conf_meso), "Bancos_rds/sensibilidade.rds")
 cat("\nSENS_OK\n")
