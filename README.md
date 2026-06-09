@@ -1,5 +1,7 @@
 # LeptoClima-MG_2010-2024
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617304.svg)](https://doi.org/10.5281/zenodo.20617304) · Licença: [CC BY 4.0](LICENSE)
+
 Associação entre o clima (precipitação, temperatura, umidade relativa, radiação
 solar, vento e evapotranspiração), a densidade demográfica e a incidência de
 **leptospirose** nas 12 mesorregiões de **Minas Gerais**, de **2010 a 2024**,
@@ -104,6 +106,6 @@ Ao utilizar estes dados ou códigos, cite o repositório (metadados em `CITATION
 
 > Janssen MA, Resende ES, Fernandes AP. LeptoClima-MG: dados e códigos — Fatores
 > climáticos e socioambientais associados à incidência de leptospirose em Minas Gerais,
-> Brasil, 2010–2024. v1.0.0. Zenodo; 2026. [inserir DOI do Zenodo após o depósito]
+> Brasil, 2010–2024. v1.0.0. Zenodo; 2026. https://doi.org/10.5281/zenodo.20617304
 
 Quando publicado, cite também o artigo correspondente (submetido à *Cadernos de Saúde Pública*).
