@@ -49,6 +49,7 @@ ggsave("Resultados/Figuras/scatter_moran_univariado.png", g1, width = 8, height 
 g2 <- scatter(muni$inc_conf, muni$precip, muni$lisa_biv,
               "Diagrama de Moran bivariado - incidencia (confirmados) x precipitacao, MG 2010-2024",
               "Defasagem espacial da PRECIPITACAO (media dos vizinhos, z)")
+g2 <- g2 + labs(title = NULL, subtitle = NULL)   # Figura 3: titulo no caption, nao no painel
 ggsave("Resultados/Figuras/scatter_moran_bivariado.png", g2, width = 8, height = 6.5, dpi = 300)
 
 cat("Diagramas de Moran salvos em Resultados/Figuras/:\n",

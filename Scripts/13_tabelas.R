@@ -18,10 +18,12 @@ ktau <- function(x,y){ ok<-is.finite(x)&is.finite(y); x<-x[ok]; y<-y[ok]
 pm <- popm |> group_by(name_meso) |> summarise(pop=mean(pop), .groups="drop")
 t1 <- panel |> group_by(name_meso) |> group_modify(function(d,...){
   a<-ktau(d$inc_conf,d$pr_l2); b<-ktau(d$r_inc_conf,d$r_pr_l2)
-  tibble(Casos=sum(d$conf), tauP=a[1],pP=a[2], tauP4=b[1],pP4=b[2]) }) |> ungroup() |>
+  tibble(Casos=sum(d$conf), Notif=sum(d$noti), tauP=a[1],pP=a[2], tauP4=b[1],pP4=b[2]) }) |> ungroup() |>
   left_join(pm, by="name_meso") |>
-  transmute(Mesorregiao=name_meso, Casos,
+  transmute(Mesorregiao=name_meso, Casos,                                   # confirmados (co-primario)
             `Incidencia_100mil`=round(Casos/pop*1e5,1),
+            Notificados=Notif,                                             # notificados (co-primario)
+            `Incidencia_notif_100mil`=round(Notif/pop*1e5,1),
             `Kendall_semanal`=paste0(sprintf("%.2f",tauP), st(pP)),
             `Kendall_4SE`=paste0(sprintf("%.2f",tauP4), st(pP4))) |>
   arrange(desc(Incidencia_100mil))
@@ -45,7 +47,8 @@ bim <- function(x,y,nsim=999){ zx<-as.numeric(scale(x)); zy<-as.numeric(scale(y)
 labs <- c(precip="Precipitação", temp="Temperatura", rh="Umidade relativa", rs="Radiação solar",
           u2="Velocidade do vento", eto="Evapotranspiração", logdens="Densidade demográfica (log)",
           ivs="IVS", esgoto="Esgoto", agua="Água", lixo="Lixo")
-mb <- sapply(names(labs), function(v){ r<-bim(muni$inc_conf, muni[[v]]); sprintf("%.2f%s", r[1], st(r[2])) })
+mb  <- sapply(names(labs), function(v){ r<-bim(muni$inc_conf, muni[[v]]); sprintf("%.2f%s", r[1], st(r[2])) })
+mbn <- sapply(names(labs), function(v){ r<-bim(muni$inc_noti, muni[[v]]); sprintf("%.2f%s", r[1], st(r[2])) })  # notificados (co-primario)
 irrc <- rep(NA_character_, length(labs)); irrn <- rep(NA_character_, length(labs))  # IRR so para clima precip/temp
 irrc[1] <- irr(mf,"pr_z"); irrc[2] <- irr(mf,"t_z")
 irrn[1] <- irr(mc,"pr_z"); irrn[2] <- irr(mc,"t_z")
@@ -54,6 +57,28 @@ t2 <- data.frame(
   Variavel = unname(labs),
   IRR_confirmados = irrc,
   IRR_notificados = irrn,
-  Moran_bivariado = unname(mb))
+  Moran_confirmados = unname(mb),
+  Moran_notificados = unname(mbn))
 write.csv(t2, "Bancos_rds/tabela2.csv", row.names=FALSE)
 cat("\n=== TABELA 2 ===\n"); print(t2)
+
+# ---- TABELA SUPLEMENTAR: modelo de erro espacial por especificacao (CRITICOS 1 e 2) ----
+# Reune as saidas dos scripts 19 (log x bruta) e 20 (+ taxa de confirmacao; notificados).
+ac <- tryCatch(readRDS("Bancos_rds/analises_complementares.rds"),  error=function(e) NULL)
+cc <- tryCatch(readRDS("Bancos_rds/confirmacao_covariavel.rds"),   error=function(e) NULL)
+if (!is.null(ac) && !is.null(cc)) {
+  fb <- function(cf,v) if (v %in% rownames(cf)) sprintf("%+.3f (%.3f)%s", cf[v,1], cf[v,2], st(cf[v,4])) else "—"
+  vars <- c(precip_z="Precipitação", temp_z="Temperatura", ivs_z="IVS",
+            dens_z="Densidade (log)", pconf_z="Taxa de confirmação")
+  ts <- data.frame(
+    Variavel = unname(vars),
+    `Confirmados log (primário)`  = sapply(names(vars), function(v) fb(ac$sem_log, v)),
+    `Confirmados escala bruta`    = sapply(names(vars), function(v) fb(ac$sem_raw, v)),
+    `Confirmados log + confirm.`  = sapply(names(vars), function(v) fb(cc$sem1,    v)),
+    `Notificados log + confirm.`  = sapply(names(vars), function(v) fb(cc$semN,    v)),
+    check.names = FALSE)
+  write.csv(ts, "Bancos_rds/tabela_sensibilidade_espacial.csv", row.names=FALSE)
+  cat("\n=== TABELA SUPLEMENTAR (erro espacial, coef. por DP; EP entre parenteses) ===\n"); print(ts)
+  cat("Moran global da incidencia: confirmados", cc$moran["conf"], "| notificados", cc$moran["noti"],
+      "| confirmados ajust. p/ confirmacao", cc$moran["conf_adj"], "\n")
+}

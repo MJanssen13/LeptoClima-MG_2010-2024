@@ -11,6 +11,9 @@ artigo_texto.txt
 decisao_revista.txt
 dicionario_dados.txt
 
+# --- Arquivos de sistema do macOS ---
+.DS_Store
+
 # --- Arquivos locais do R / RStudio ---
 .Rhistory
 .RData
@@ -22,6 +25,7 @@ dicionario_dados.txt
 .claude/
 
 # Resposta aos revisores (cita o parecer — manter fora do repositorio publico)
+Documentos/
 RESPOSTA_AO_PARECER.md
 ARTIGO_REVISADO.md
 ARTIGO_REVISADO.docx

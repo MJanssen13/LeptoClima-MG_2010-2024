@@ -13,7 +13,7 @@ camada socioambiental (IVS e saneamento).
 ## Estrutura do repositório
 
 ```
-Scripts/             Código R — tratamento (01-05, 15), descritiva (17), temporal (06-07), espacial (08-11, 16), tabelas/figuras (12-14)
+Scripts/             Código R — tratamento (01-05, 15), descritiva (17), temporal (06-07), espacial (08-11, 16), sensibilidade e robustez (18-23), tabelas/figuras (12-14, 19, 24)
 Bancos_rds/          Bancos processados (.rds), prontos para análise
 Resultados/Figuras/  Mapas e diagramas (.png) gerados pelas análises espaciais
 Dados_brutos/        Dados brutos (parcialmente versionados — ver "Fontes de dados")
@@ -42,11 +42,16 @@ Dados_brutos/        Dados brutos (parcialmente versionados — ver "Fontes de d
 | 17 | `17_caracterizacao_casos.R` | Caracterização descritiva dos casos (sexo, idade, raça/cor, evolução/letalidade, hospitalização, antecedentes, tendência anual Mann-Kendall e sazonalidade) | console |
 | 18 | `18_sensibilidade.R` | Sensibilidade: regionalização (mesorregião × macrorregião de saúde, PDR/SES-MG) e defasagem temporal (2 SE × 0 SE) | `lookup_macrorregiao_saude`, `sensibilidade` |
 | 19 | `19_figura3_combinada.R` | Monta a Figura 3 (painel duplo: mapa do LISA bivariado + diagrama de dispersão de Moran) | figura |
-| 19 | `19_analises_complementares.R` | Complementares: BN com termo sazonal (R3) e modelo de erro espacial multivariável (R4) | `analises_complementares` |
+| 19 | `19_analises_complementares.R` | Complementares: BN com termo sazonal e modelo de erro espacial multivariável | `analises_complementares` |
+| 20 | `20_confirmacao_covariavel.R` | Confundimento por acesso ao diagnóstico: taxa de confirmação como covariável; sobrevivência de Moran/LISA e notificados como desfecho co-primário | `confirmacao_covariavel` |
+| 21 | `21_validacao_alerta.R` | Validação preditiva do alerta climatológico (treino ≤2019/teste 2020–2024; sensibilidade, falso-alarme, lead time, HSS) | `validacao_alerta` |
+| 22 | `22_ic_robustos.R` | IC robustos à autocorrelação temporal (cluster por mesorregião/mesorregião-ano; GEE Poisson AR(1)) | `ic_robustos` |
+| 23 | `23_fdr.R` | Controle de múltiplas comparações (FDR/Benjamini-Hochberg) nas correlações de Kendall e nos testes de Moran/LISA | `fdr` |
+| 24 | `24_figuras_robustez.R` | Figuras das análises complementares e de robustez (scripts 20–23) | figuras |
 
 Os scripts 01–05 reconstroem os bancos a partir dos dados brutos. Como os bancos
 processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
-(06–16) sem reprocessar tudo. As figuras (mapas e diagramas) ficam em `Resultados/Figuras/`.
+(06–24) sem reprocessar tudo. As figuras (mapas e diagramas) ficam em `Resultados/Figuras/`.
 
 ## Fontes de dados brutos (`Dados_brutos/`)
 
@@ -85,6 +90,14 @@ Rscript Scripts/11_moran_scatterplots.R
 Rscript Scripts/12_figura_temporal.R
 Rscript Scripts/13_tabelas.R
 Rscript Scripts/17_caracterizacao_casos.R    # caracterizacao descritiva dos casos
+Rscript Scripts/18_sensibilidade.R           # sensibilidade (regionalizacao e defasagem)
+Rscript Scripts/19_analises_complementares.R # BN sazonal e erro espacial multivariavel
+Rscript Scripts/20_confirmacao_covariavel.R  # confundimento por acesso ao diagnostico
+Rscript Scripts/21_validacao_alerta.R        # validacao preditiva do alerta
+Rscript Scripts/22_ic_robustos.R             # IC robustos a autocorrelacao temporal
+Rscript Scripts/23_fdr.R                      # controle de multiplas comparacoes (FDR)
+Rscript Scripts/19_figura3_combinada.R       # Figura 3 (painel duplo; usa 10 e 11)
+Rscript Scripts/24_figuras_robustez.R        # figuras das analises de robustez (20-23)
 ```
 
 ## Software

@@ -4,7 +4,7 @@
 #   (A) Moran global univariado  -> a incidencia se agrupa no espaco?
 #   (B) Moran global bivariado    -> incidencia x precipitacao / IVS / saneamento
 #   Pesos: contiguidade de rainha (queen), padronizados por linha.
-#   Substitui o mapa de Kernel (criticado pelo revisor) por analise de incidencia.
+#   Desfecho espacial: incidencia acumulada (casos/100 mil hab.) por municipio.
 # Bancos: base_MG, lookup_muni_meso, pop_municipal, clima_semanal_municipal,
 #         vulnerabilidade_mg ; geometria via geobr.
 # =============================================================================

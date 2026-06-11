@@ -6,7 +6,7 @@
 # =============================================================================
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 suppressMessages({library(dplyr); library(lubridate); library(MASS); library(readxl)})
-setwd("D:/Pesquisas/Leptospirose")
+# Executar a partir da raiz do projeto (caminhos relativos, como os demais scripts).
 st <- function(p) ifelse(is.na(p),"", ifelse(p<0.001,"***", ifelse(p<0.01,"**", ifelse(p<0.05,"*","ns"))))
 ktau <- function(x,y){ ok<-is.finite(x)&is.finite(y); if(sum(ok)<10) return(c(NA,NA))
   r<-suppressWarnings(cor.test(x[ok],y[ok],method="kendall")); c(unname(r$estimate), r$p.value) }

@@ -1,8 +1,8 @@
 # =============================================================================
-# ANALISES COMPLEMENTARES (parecer, Revisao Maior)
-#   R3) Binomial Negativa temporal COM termo de sazonalidade (mes) — testa se o
+# ANALISES COMPLEMENTARES
+#   (A) Binomial Negativa temporal COM termo de sazonalidade (mes): testa se o
 #       efeito da precipitacao sobrevive ao ajuste pela estacao do ano.
-#   R4) Regressao espacial multivariavel (modelo de erro espacial) da incidencia
+#   (B) Regressao espacial multivariavel (modelo de erro espacial) da incidencia
 #       municipal ~ precipitacao + temperatura + IVS + densidade (ajuste conjunto
 #       + autocorrelacao espacial), complementando o Moran bivariado univariado.
 # Saidas: console.

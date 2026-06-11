@@ -58,8 +58,7 @@ cat("LISA bivariado (incidencia confirmados x precipitacao):\n"); print(table(mu
 ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.png",
   ggplot(muni) + geom_sf(aes(fill = lisa_biv), color = "grey70", linewidth = 0.05) +
     scale_fill_manual(values = cores, name = "Cluster LISA\nbivariado", drop = FALSE) +
-    labs(title = "LISA bivariado: incidencia de leptospirose (confirmados) x precipitacao",
-         subtitle = "Minas Gerais, 2010-2024  |  Alto-Alto = alta incidencia onde a chuva vizinha e alta") + base_carto,
+    base_carto,
   width = 9, height = 7, dpi = 300)
 
 saveRDS(muni, "Bancos_rds/dados_espaciais_municipal.rds")
