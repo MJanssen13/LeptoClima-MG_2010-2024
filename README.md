@@ -13,45 +13,36 @@ camada socioambiental (IVS e saneamento).
 ## Estrutura do repositório
 
 ```
-Scripts/             Código R — tratamento (01-05, 15), descritiva (17), temporal (06-07), espacial (08-11, 16), sensibilidade e robustez (18-23), tabelas/figuras (12-14, 19, 24)
-Bancos_rds/          Bancos processados (.rds), prontos para análise
-Resultados/Figuras/  Mapas e diagramas (.png) gerados pelas análises espaciais
-Dados_brutos/        Dados brutos (parcialmente versionados — ver "Fontes de dados")
+Scripts/                          Código R organizado por análise (5 arquivos — ver Pipeline)
+Bancos_rds/                       Bancos processados (.rds), prontos para análise
+Resultados/Figuras/               Mapas e diagramas (.png) gerados pelas análises
+Resultados/Tabelas/               Tabelas principais e suplementares (.docx)
+Resultados/Material_suplementar/  Figuras suplementares (S1–S9) e documentos do material suplementar
+Dados_brutos/                     Dados brutos (parcialmente versionados — ver "Fontes de dados")
 ```
 
 ## Pipeline (executar a partir da raiz do projeto, nesta ordem)
 
-| # | Script | Banco / Análise | Saídas |
-|---|--------|-----------------|--------|
-| 01 | `01_dados_populacao_ibge.R` | População (IBGE) + malha município→mesorregião | `lookup_muni_meso`, `pop_municipal_2010_2024`, `pop_mesorregiao_2010_2024` |
-| 02 | `02_dados_casos_sinan.R` | Casos de leptospirose (SINAN/DATASUS) | `banco_leptospirose_unificado`, `base_MG_2010_2024`, `serie_semanal_2010_2024` |
-| 03 | `03_dados_clima_brdwgd.R` | Precipitação e temperatura (BR-DWGD) | `clima_semanal_municipal`, `clima_semanal_mesorregiao` |
-| 04 | `04_dados_saneamento_censo2022.R` | Saneamento básico (Censo 2022) | `saneamento_mg_2022` |
-| 05 | `05_dados_ivs_ipea.R` | IVS (Atlas IPEA) + vulnerabilidade | `ivs_mg_2010`, `vulnerabilidade_mg` |
-| 06 | `06_analise_temporal.R` | Correlação de Kendall (SE, lag 2; soma móvel 4 SE) | `dados_temporais` |
-| 07 | `07_modelo_temporal.R` | Modelo Binomial Negativa (precip + temp) | — |
-| 08 | `08_analise_espacial.R` | Moran global (univariado e bivariado) por município | `dados_espaciais_municipal` |
-| 09 | `09_lisa_mapas.R` | LISA (clusters) + mapas de incidência e de cluster (confirmados) | figuras |
-| 10 | `10_mapas_extras.R` | Mapas de notificados + LISA bivariado (incidência × precipitação) | figuras |
-| 11 | `11_moran_scatterplots.R` | Diagramas de Moran (scatterplots) univariado e bivariado | figuras |
-| 12 | `12_figura_temporal.R` | Figura da série temporal (incidência mensal × precipitação) | figura |
-| 13 | `13_tabelas.R` | Tabelas 1 (Kendall) e 2 (IRR + Moran bivariado de 11 variáveis) | `tabela1.csv`, `tabela2.csv` |
-| 14 | `14_gerar_docx.R` | Gera o manuscrito em `.docx` (uso local; não versionado) | — |
-| 15 | `15_extrai_clima_extra.R` | Extrai RH, Rs, u2 e ETo (BR-DWGD) por município | `mg_clima_extra_diario.rds` |
-| 16 | `16_variaveis_extras_espacial.R` | Adiciona clima extra + densidade à base espacial e calcula o Moran bivariado | `dados_espaciais_municipal` (atualizado) |
-| 17 | `17_caracterizacao_casos.R` | Caracterização descritiva dos casos (sexo, idade, raça/cor, evolução/letalidade, hospitalização, antecedentes, tendência anual Mann-Kendall e sazonalidade) | console |
-| 18 | `18_sensibilidade.R` | Sensibilidade: regionalização (mesorregião × macrorregião de saúde, PDR/SES-MG) e defasagem temporal (2 SE × 0 SE) | `lookup_macrorregiao_saude`, `sensibilidade` |
-| 19 | `19_figura3_combinada.R` | Monta a Figura 3 (painel duplo: mapa do LISA bivariado + diagrama de dispersão de Moran) | figura |
-| 19 | `19_analises_complementares.R` | Complementares: BN com termo sazonal e modelo de erro espacial multivariável | `analises_complementares` |
-| 20 | `20_confirmacao_covariavel.R` | Confundimento por acesso ao diagnóstico: taxa de confirmação como covariável; sobrevivência de Moran/LISA e notificados como desfecho co-primário | `confirmacao_covariavel` |
-| 21 | `21_validacao_alerta.R` | Validação preditiva do alerta climatológico (treino ≤2019/teste 2020–2024; sensibilidade, falso-alarme, lead time, HSS) | `validacao_alerta` |
-| 22 | `22_ic_robustos.R` | IC robustos à autocorrelação temporal (cluster por mesorregião/mesorregião-ano; GEE Poisson AR(1)) | `ic_robustos` |
-| 23 | `23_fdr.R` | Controle de múltiplas comparações (FDR/Benjamini-Hochberg) nas correlações de Kendall e nos testes de Moran/LISA | `fdr` |
-| 24 | `24_figuras_robustez.R` | Figuras das análises complementares e de robustez (scripts 20–23) | figuras |
+Os 24 scripts originais foram reunidos em **5 arquivos temáticos**, cada um com o
+código de uma etapa da análise, delimitado internamente por blocos que indicam a
+origem (`# [bloco: ...]`).
 
-Os scripts 01–05 reconstroem os bancos a partir dos dados brutos. Como os bancos
+| # | Script | Conteúdo (etapas reunidas) | Principais saídas |
+|---|--------|----------------------------|-------------------|
+| 01 | `01_tratamento_dados.R` | Reconstrói os bancos a partir dos dados brutos: população e malha (IBGE), casos de leptospirose (SINAN/DATASUS), clima (BR-DWGD: precip./temp. e RH/Rs/u2/ETo), saneamento (Censo 2022) e IVS (Atlas IPEA). *(antigos 01–05, 15)* | bancos em `Bancos_rds/` |
+| 02 | `02_analise_temporal.R` | Correlação de Kendall (SE, lag 2; soma móvel 4 SE), modelo Binomial Negativa (precip. + temp.) e figura da série temporal. *(antigos 06, 07, 12)* | `dados_temporais`, `fig_serie_temporal.png` |
+| 03 | `03_analise_espacial.R` | Moran global (uni e bivariado), variáveis extras + densidade, LISA e mapas, mapas de notificados/LISA bivariado, diagramas de Moran e Figura 3. *(antigos 08, 16, 09, 10, 11, 19_figura3)* | `dados_espaciais_municipal`, mapas e diagramas |
+| 04 | `04_caracterizacao_tabelas.R` | Caracterização descritiva dos casos, Tabelas 1 e 2 (CSV) e manuscrito em `.docx` (uso local; a saída `.docx` não é versionada). *(antigos 17, 13, 14)* | `tabela1.csv`, `tabela2.csv` |
+| 05 | `05_sensibilidade_robustez.R` | Sensibilidade (regionalização e defasagem), análises complementares (BN sazonal e erro espacial multivariável), confundimento por confirmação, validação do alerta, IC robustos, FDR e figuras de robustez. *(antigos 18, 19_analises_complementares, 20–24)* | `sensibilidade`, `analises_complementares`, `confirmacao_covariavel`, `validacao_alerta`, `ic_robustos`, `fdr`, figuras de robustez |
+
+O script **01** reconstrói os bancos a partir dos dados brutos. Como os bancos
 processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
-(06–24) sem reprocessar tudo. As figuras (mapas e diagramas) ficam em `Resultados/Figuras/`.
+(**02–05**) sem reprocessar tudo. As figuras (mapas e diagramas) ficam em
+`Resultados/Figuras/`.
+
+> **Nota:** ao reunir os scripts numa mesma sessão de R, o `MASS` (carregado no
+> modelo temporal) mascara `dplyr::select`; por isso a chamada afetada em
+> `02_analise_temporal.R` é qualificada como `dplyr::select`.
 
 ## Fontes de dados brutos (`Dados_brutos/`)
 
@@ -62,48 +53,31 @@ processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
 | **IBGE** | Estimativas e Censos (população, saneamento) | online via pacote `sidrar` |
 | **Malha territorial** | Municípios e mesorregiões de MG | online via pacote `geobr` |
 | **Atlas IPEA (IVS)** | Base Completa do IVS (`atlasivs_dadosbrutos_pt_v2 - MG.xlsx`) | `Dados_brutos/dados_pop/` — ivs.ipea.gov.br |
-| **SES-MG (PDR 2026)** | Regionalização de saúde (município → macrorregião de saúde) — sensibilidade (script 18) | `Dados_brutos/dados_pop/Planilha-de-Regionalizacao_SES-MG_2026.xlsx` — saude.mg.gov.br |
+| **SES-MG (PDR 2026)** | Regionalização de saúde (município → macrorregião de saúde) — sensibilidade (script 05) | `Dados_brutos/dados_pop/Planilha-de-Regionalizacao_SES-MG_2026.xlsx` — saude.mg.gov.br |
 
 > **Não versionados (excedem 100 MB/arquivo do GitHub):** as grades NetCDF do
 > BR-DWGD (`Dados_brutos/dados_clima/raw/*.nc`, ~2,7 GB cada). O clima diário já
 > extraído por município (`mg_clima_diario_2010_2024_FINAL.rds`, precip/temp, e
 > `mg_clima_extra_diario.rds`, RH/Rs/u2/ETo) **está incluído**, então a pipeline
-> roda sem as grades.
+> roda sem as grades. A base bruta do IVS (Atlas IPEA) também não é versionada.
 
 ## Como rodar
 
 ```r
-# a partir da raiz do projeto:
-Rscript Scripts/01_dados_populacao_ibge.R
-Rscript Scripts/02_dados_casos_sinan.R
-Rscript Scripts/03_dados_clima_brdwgd.R
-Rscript Scripts/04_dados_saneamento_censo2022.R
-Rscript Scripts/05_dados_ivs_ipea.R
-Rscript Scripts/15_extrai_clima_extra.R       # RH, Rs, u2, ETo (BR-DWGD)
-Rscript Scripts/06_analise_temporal.R
-Rscript Scripts/07_modelo_temporal.R
-Rscript Scripts/08_analise_espacial.R
-Rscript Scripts/16_variaveis_extras_espacial.R  # + densidade e clima extra (espacial)
-Rscript Scripts/09_lisa_mapas.R
-Rscript Scripts/10_mapas_extras.R
-Rscript Scripts/11_moran_scatterplots.R
-Rscript Scripts/12_figura_temporal.R
-Rscript Scripts/13_tabelas.R
-Rscript Scripts/17_caracterizacao_casos.R    # caracterizacao descritiva dos casos
-Rscript Scripts/18_sensibilidade.R           # sensibilidade (regionalizacao e defasagem)
-Rscript Scripts/19_analises_complementares.R # BN sazonal e erro espacial multivariavel
-Rscript Scripts/20_confirmacao_covariavel.R  # confundimento por acesso ao diagnostico
-Rscript Scripts/21_validacao_alerta.R        # validacao preditiva do alerta
-Rscript Scripts/22_ic_robustos.R             # IC robustos a autocorrelacao temporal
-Rscript Scripts/23_fdr.R                      # controle de multiplas comparacoes (FDR)
-Rscript Scripts/19_figura3_combinada.R       # Figura 3 (painel duplo; usa 10 e 11)
-Rscript Scripts/24_figuras_robustez.R        # figuras das analises de robustez (20-23)
+# a partir da raiz do projeto, nesta ordem:
+Rscript Scripts/01_tratamento_dados.R        # tratamento dos dados (requer internet e Rtools)
+Rscript Scripts/02_analise_temporal.R        # Kendall, Binomial Negativa e série temporal
+Rscript Scripts/03_analise_espacial.R        # Moran, LISA, mapas e diagramas (Figura 3)
+Rscript Scripts/04_caracterizacao_tabelas.R  # caracterização descritiva e Tabelas 1–2
+Rscript Scripts/05_sensibilidade_robustez.R  # sensibilidade, complementares e robustez
 ```
 
 ## Software
 
 R (≥ 4.6). Pacotes: `read.dbc`, `dplyr`, `tidyr`, `lubridate`, `sidrar`, `geobr`,
-`sf`, `terra`, `exactextractr`, `readxl`, `MASS`, `spdep`, `ggplot2`, `ggspatial`.
+`sf`, `terra`, `exactextractr`, `readxl`, `MASS`, `spdep`, `spatialreg`,
+`sandwich`, `lmtest`, `geepack`, `ggplot2`, `ggspatial`, `forcats`, `patchwork`,
+`scales`, `officer`, `flextable`, `png`.
 A leitura dos `.dbc` do DATASUS (`read.dbc`) requer **Rtools** (compilação).
 
 ## Licença
@@ -120,6 +94,6 @@ Ao utilizar estes dados ou códigos, cite o repositório (metadados em `CITATION
 
 > Janssen MA, Resende ES, Fernandes AP. LeptoClima-MG: dados e códigos — Fatores
 > climáticos e socioambientais associados à incidência de leptospirose em Minas Gerais,
-> Brasil, 2010–2024. v1.0.0. Zenodo; 2026. https://doi.org/10.5281/zenodo.20617304
+> Brasil, 2010–2024. v1.1.0. Zenodo; 2026. https://doi.org/10.5281/zenodo.20617304
 
 Quando publicado, cite também o artigo correspondente (submetido à *Cadernos de Saúde Pública*).

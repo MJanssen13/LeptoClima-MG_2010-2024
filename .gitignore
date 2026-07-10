@@ -3,6 +3,7 @@
 #     esta versionado, entao a pipeline roda sem estes arquivos.
 Dados_brutos/dados_clima/raw/
 Dados_brutos/dados_pop/atlasivs_dadosbrutos_pt_v2.xlsx
+Dados_brutos/dados_pop/IVS-MG.csv
 
 # --- Materiais NAO relacionados a analise atual (artigo anterior, parecer etc.) ---
 repo_original/
@@ -32,6 +33,13 @@ ARTIGO_REVISADO.docx
 ARTIGO_REVISADO.html
 CARTA_APRESENTACAO.md
 CARTA_APRESENTACAO.docx
+
+# --- Materiais de submissao (texto do manuscrito; mantidos fora do repositorio publico) ---
+Resultados/Para envio/
+Resultados/Textos/
+
+# --- Rascunhos/depuracao locais ---
+_mark/
 
 # Arquivos temporarios/lock do Word
 ~$*
