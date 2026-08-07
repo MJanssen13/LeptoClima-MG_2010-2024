@@ -12,8 +12,7 @@ o que vai anexado a submissao:
                             semanas de maior incidencia, treino ate 2019 e teste 2020-2024
 
 Os demais resultados de sensibilidade e robustez (antigas Tabelas S2-S9 e
-Figuras S1-S6, S8-S9) NAO acompanham a submissao: permanecem preservados em
-../Material_suplementar/ e publicamente disponiveis no deposito Zenodo citado
-no manuscrito (referencia 21), conforme a secao "Disponibilidade de dados".
-
-A pasta original ../Material_suplementar/ foi mantida intacta.
+Figuras S1-S6, S8-S9) NAO acompanham a submissao a RESS. Eles permanecem
+preservados em ../CSP/Material_suplementar/ e publicamente disponiveis no
+deposito Zenodo citado no manuscrito (referencia 21), conforme a secao
+"Disponibilidade de dados".

@@ -1,0 +1,21 @@
+SUBMISSAO ANTERIOR - Cadernos de Saude Publica (CSP)
+====================================================
+
+Materiais preparados para a submissao a CSP, que nao foi aceita. Mantidos
+para historico e rastreabilidade; NAO fazem parte do pacote enviado a RESS.
+
+  Texto/                       Corpo e resumo do manuscrito na formatacao da CSP
+                               (nao versionado, conforme a politica do repositorio
+                               para textos de submissao)
+  Material_suplementar/        Suplemento da CSP: 18 itens (Tabelas S1-S9 e
+                               Figuras S1-S9), sem limite de quantidade na revista
+  Tabelas suplementares.docx   Tabelas suplementares consolidadas
+
+Principais diferencas em relacao a versao RESS:
+  - a CSP admitia suplemento amplo; a RESS limita a DOIS itens em arquivo unico
+  - a CSP usava citacao numerica sobrescrita; a RESS usa Vancouver entre colchetes
+  - a CSP media o resumo em caracteres; a RESS exige resumo estruturado ate 250 palavras
+  - as tabelas da CSP traziam asteriscos de significancia; a RESS exige valor-p exato
+
+O pacote atual da submissao esta em ../Para envio/ (texto, tabelas e figuras) e
+em ../Material_suplementar_RESS/ (arquivo unico de dois itens).
