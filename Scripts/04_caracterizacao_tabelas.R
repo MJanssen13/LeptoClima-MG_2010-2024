@@ -100,7 +100,12 @@ set.seed(1)  # reprodutibilidade do Moran por permutacao
 
 panel <- readRDS("Bancos_rds/dados_temporais.rds")
 popm  <- readRDS("Bancos_rds/pop_mesorregiao_2010_2024.rds")
-st <- function(p) ifelse(is.na(p), "", ifelse(p<0.001,"***", ifelse(p<0.01,"**", ifelse(p<0.05,"*","ns"))))
+# Formatacao no padrao da RESS: valor-p exato com 3 casas ("<0,001" quando p<0,001),
+# virgula decimal e ponto como separador de milhar (substitui os antigos asteriscos).
+pf  <- function(p) ifelse(is.na(p), "", ifelse(p < 0.001, "<0,001", sub("\\.", ",", sprintf("%.3f", p))))
+fmt <- function(x, d = 2) formatC(x, format = "f", digits = d, decimal.mark = ",", big.mark = ".")
+int <- function(x) formatC(as.integer(x), format = "d", big.mark = ".")
+pfx <- function(p) ifelse(is.na(p), "", ifelse(p < 0.001, "p<0,001", paste0("p=", pf(p))))  # evita "p=<0,001"
 ktau <- function(x,y){ ok<-is.finite(x)&is.finite(y); x<-x[ok]; y<-y[ok]
   if(length(x)<10) return(c(NA,NA)); r<-suppressWarnings(cor.test(x,y,method="kendall")); c(unname(r$estimate),r$p.value) }
 
@@ -110,21 +115,24 @@ t1 <- panel |> group_by(name_meso) |> group_modify(function(d,...){
   a<-ktau(d$inc_conf,d$pr_l2); b<-ktau(d$r_inc_conf,d$r_pr_l2)
   tibble(Casos=sum(d$conf), Notif=sum(d$noti), tauP=a[1],pP=a[2], tauP4=b[1],pP4=b[2]) }) |> ungroup() |>
   left_join(pm, by="name_meso") |>
-  transmute(Mesorregiao=name_meso, Casos,                                   # confirmados (co-primario)
-            `Incidencia_100mil`=round(Casos/pop*1e5,1),
-            Notificados=Notif,                                             # notificados (co-primario)
-            `Incidencia_notif_100mil`=round(Notif/pop*1e5,1),
-            `Kendall_semanal`=paste0(sprintf("%.2f",tauP), st(pP)),
-            `Kendall_4SE`=paste0(sprintf("%.2f",tauP4), st(pP4))) |>
-  arrange(desc(Incidencia_100mil))
+  mutate(inc_conf_num = Casos/pop*1e5) |>
+  transmute(Mesorregiao=name_meso, Casos=int(Casos),                        # confirmados (co-primario)
+            `Incidencia_100mil`=fmt(inc_conf_num, 1),
+            Notificados=int(Notif),                                         # notificados (co-primario)
+            `Incidencia_notif_100mil`=fmt(Notif/pop*1e5, 1),
+            `Kendall_semanal`=paste0(fmt(tauP), " (", pf(pP), ")"),         # tau (valor-p exato)
+            `Kendall_4SE`=paste0(fmt(tauP4), " (", pf(pP4), ")"),
+            ord = inc_conf_num) |>
+  arrange(desc(ord)) |> dplyr::select(-ord)   # dplyr:: explicito (MASS mascara select)
 write.csv(t1, "Bancos_rds/tabela1.csv", row.names=FALSE)
 cat("=== TABELA 1 ===\n"); print(as.data.frame(t1))
 
 # ---- TABELA 2A: regressao Binomial Negativa (IRR por desvio-padrao) ----
 d <- panel |> filter(!is.na(pr_l2),!is.na(t_l2),pop>0) |>
   mutate(pr_z=as.numeric(scale(pr_l2)), t_z=as.numeric(scale(t_l2)), meso=factor(name_meso), yr=ano-2017)
-irr <- function(m,v){ s<-summary(m)$coefficients[v,]; sprintf("%.2f (%.2f-%.2f)%s",
-  exp(s[1]), exp(s[1]-1.96*s[2]), exp(s[1]+1.96*s[2]), st(s[4])) }
+irr <- function(m,v){ s<-summary(m)$coefficients[v,]                       # IRR (IC95%), sem asteriscos
+  sprintf("%s (%s; %s)", fmt(exp(s[1])), fmt(exp(s[1]-1.96*s[2])), fmt(exp(s[1]+1.96*s[2]))) }
+irr_p <- function(m,v) pf(summary(m)$coefficients[v,4])                    # p exato p/ a nota de rodape
 mf <- suppressWarnings(glm.nb(conf~pr_z+t_z+meso+yr+offset(log(pop)), data=d))
 mc <- suppressWarnings(glm.nb(noti~pr_z+t_z+meso+yr+offset(log(pop)), data=d))
 
@@ -137,8 +145,10 @@ bim <- function(x,y,nsim=999){ zx<-as.numeric(scale(x)); zy<-as.numeric(scale(y)
 labs <- c(precip="Precipitação", temp="Temperatura", rh="Umidade relativa", rs="Radiação solar",
           u2="Velocidade do vento", eto="Evapotranspiração", logdens="Densidade demográfica (log)",
           ivs="IVS", esgoto="Esgoto", agua="Água", lixo="Lixo")
-mb  <- sapply(names(labs), function(v){ r<-bim(muni$inc_conf, muni[[v]]); sprintf("%.2f%s", r[1], st(r[2])) })
-mbn <- sapply(names(labs), function(v){ r<-bim(muni$inc_noti, muni[[v]]); sprintf("%.2f%s", r[1], st(r[2])) })  # notificados (co-primario)
+mb_r  <- sapply(names(labs), function(v) bim(muni$inc_conf, muni[[v]]))    # linha 1 = I ; linha 2 = p
+mbn_r <- sapply(names(labs), function(v) bim(muni$inc_noti, muni[[v]]))    # notificados (co-primario)
+mb  <- fmt(mb_r[1, ]);  mbn <- fmt(mbn_r[1, ])
+mb_p <- pf(mb_r[2, ]);  mbn_p <- pf(mbn_r[2, ])                            # p exatos p/ a nota de rodape
 irrc <- rep(NA_character_, length(labs)); irrn <- rep(NA_character_, length(labs))  # IRR so para clima precip/temp
 irrc[1] <- irr(mf,"pr_z"); irrc[2] <- irr(mf,"t_z")
 irrn[1] <- irr(mc,"pr_z"); irrn[2] <- irr(mc,"t_z")
@@ -152,12 +162,23 @@ t2 <- data.frame(
 write.csv(t2, "Bancos_rds/tabela2.csv", row.names=FALSE)
 cat("\n=== TABELA 2 ===\n"); print(t2)
 
+# Nota de rodape da Tabela 2 (a RESS exige p exato; as celulas ficam sem asteriscos)
+cat("\n--- nota de rodape da Tabela 2 (valores-p exatos) ---\n")
+cat("IRR: precipitacao ", pfx(summary(mf)$coefficients["pr_z",4]), " / ", pfx(summary(mc)$coefficients["pr_z",4]),
+    " | temperatura ", pfx(summary(mf)$coefficients["t_z",4]), " / ", pfx(summary(mc)$coefficients["t_z",4]),
+    " (confirmados/notificados)\n", sep="")
+for (i in seq_along(labs))
+  cat(sprintf("  Moran %-28s confirmados %-9s notificados %s\n",
+              labs[i], pfx(mb_r[2, i]), pfx(mbn_r[2, i])))
+
 # ---- TABELA SUPLEMENTAR: modelo de erro espacial por especificacao (CRITICOS 1 e 2) ----
 # Reune as saidas dos scripts 19 (log x bruta) e 20 (+ taxa de confirmacao; notificados).
 ac <- tryCatch(readRDS("Bancos_rds/analises_complementares.rds"),  error=function(e) NULL)
 cc <- tryCatch(readRDS("Bancos_rds/confirmacao_covariavel.rds"),   error=function(e) NULL)
 if (!is.null(ac) && !is.null(cc)) {
-  fb <- function(cf,v) if (v %in% rownames(cf)) sprintf("%+.3f (%.3f)%s", cf[v,1], cf[v,2], st(cf[v,4])) else "—"
+  fb <- function(cf,v) if (v %in% rownames(cf))
+    paste0(sub("\\.", ",", sprintf("%+.3f", cf[v,1])), " (",
+           sub("\\.", ",", sprintf("%.3f", cf[v,2])), "); ", pfx(cf[v,4])) else "—"
   vars <- c(precip_z="Precipitação", temp_z="Temperatura", ivs_z="IVS",
             dens_z="Densidade (log)", pconf_z="Taxa de confirmação")
   ts <- data.frame(
