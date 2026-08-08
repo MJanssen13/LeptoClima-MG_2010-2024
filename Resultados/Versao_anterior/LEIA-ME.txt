@@ -1,0 +1,23 @@
+VERSAO ANTERIOR DOS MATERIAIS DO ARTIGO
+=======================================
+
+Materiais preparados em uma formatacao anterior do manuscrito, mantidos para
+historico e rastreabilidade. NAO fazem parte do pacote de submissao atual.
+
+  Texto/                       Corpo e resumo do manuscrito na formatacao anterior
+                               (nao versionado, conforme a politica do repositorio
+                               para textos de submissao)
+  Material_suplementar/        Suplemento amplo: 18 itens (Tabelas S1-S9 e
+                               Figuras S1-S9)
+  Tabelas suplementares.docx   Tabelas suplementares consolidadas
+
+Principais diferencas em relacao a versao atual:
+  - o suplemento anterior era amplo; o atual se limita a DOIS itens em arquivo unico
+  - a citacao anterior era numerica sobrescrita; a atual segue Vancouver entre colchetes
+  - o resumo anterior era medido em caracteres; o atual e estruturado e limitado a
+    250 palavras
+  - as tabelas anteriores traziam asteriscos de significancia; as atuais trazem o
+    valor-p exato
+
+O pacote atual esta em ../Para envio/ (texto, tabelas e figuras) e em
+../Material_suplementar_RESS/ (arquivo unico de dois itens).

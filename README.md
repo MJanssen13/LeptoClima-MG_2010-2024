@@ -1,6 +1,6 @@
 # LeptoClima-MG_2010-2024
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617304.svg)](https://doi.org/10.5281/zenodo.20617304) [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20617303.svg)](https://doi.org/10.5281/zenodo.20617303) [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](LICENSE)
 
 Associação entre o clima (precipitação, temperatura, umidade relativa, radiação
 solar, vento e evapotranspiração), a densidade demográfica e a incidência de
@@ -17,7 +17,8 @@ Scripts/                          Código R organizado por análise (5 arquivos 
 Bancos_rds/                       Bancos processados (.rds), prontos para análise
 Resultados/Figuras/               Mapas e diagramas (.png) gerados pelas análises
 Resultados/Tabelas/               Tabelas principais e suplementares (.docx)
-Resultados/Material_suplementar/  Figuras suplementares (S1–S9) e documentos do material suplementar
+Resultados/Material_suplementar_RESS/  Material suplementar da submissão (arquivo único, dois itens)
+Resultados/Versao_anterior/       Materiais de uma formatação anterior do manuscrito (histórico)
 Dados_brutos/                     Dados brutos (parcialmente versionados — ver "Fontes de dados")
 ```
 
@@ -31,7 +32,7 @@ origem (`# [bloco: ...]`).
 |---|--------|----------------------------|-------------------|
 | 01 | `01_tratamento_dados.R` | Reconstrói os bancos a partir dos dados brutos: população e malha (IBGE), casos de leptospirose (SINAN/DATASUS), clima (BR-DWGD: precip./temp. e RH/Rs/u2/ETo), saneamento (Censo 2022) e IVS (Atlas IPEA). *(antigos 01–05, 15)* | bancos em `Bancos_rds/` |
 | 02 | `02_analise_temporal.R` | Correlação de Kendall (SE, lag 2; soma móvel 4 SE), modelo Binomial Negativa (precip. + temp.) e figura da série temporal. *(antigos 06, 07, 12)* | `dados_temporais`, `fig_serie_temporal.png` |
-| 03 | `03_analise_espacial.R` | Moran global (uni e bivariado), variáveis extras + densidade, LISA e mapas, mapas de notificados/LISA bivariado, diagramas de Moran e Figura 3. *(antigos 08, 16, 09, 10, 11, 19_figura3)* | `dados_espaciais_municipal`, mapas e diagramas |
+| 03 | `03_analise_espacial.R` | Moran global (uni e bivariado), variáveis extras + densidade, LISA e mapas, mapas de notificados/LISA bivariado e diagramas de Moran. *(antigos 08, 16, 09, 10, 11)* | `dados_espaciais_municipal`, mapas e diagramas |
 | 04 | `04_caracterizacao_tabelas.R` | Caracterização descritiva dos casos, Tabelas 1 e 2 (CSV) e manuscrito em `.docx` (uso local; a saída `.docx` não é versionada). *(antigos 17, 13, 14)* | `tabela1.csv`, `tabela2.csv` |
 | 05 | `05_sensibilidade_robustez.R` | Sensibilidade (regionalização e defasagem), análises complementares (BN sazonal e erro espacial multivariável), confundimento por confirmação, validação do alerta, IC robustos, FDR e figuras de robustez. *(antigos 18, 19_analises_complementares, 20–24)* | `sensibilidade`, `analises_complementares`, `confirmacao_covariavel`, `validacao_alerta`, `ic_robustos`, `fdr`, figuras de robustez |
 
@@ -67,7 +68,7 @@ processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
 # a partir da raiz do projeto, nesta ordem:
 Rscript Scripts/01_tratamento_dados.R        # tratamento dos dados (requer internet e Rtools)
 Rscript Scripts/02_analise_temporal.R        # Kendall, Binomial Negativa e série temporal
-Rscript Scripts/03_analise_espacial.R        # Moran, LISA, mapas e diagramas (Figura 3)
+Rscript Scripts/03_analise_espacial.R        # Moran, LISA, mapas e diagramas
 Rscript Scripts/04_caracterizacao_tabelas.R  # caracterização descritiva e Tabelas 1–2
 Rscript Scripts/05_sensibilidade_robustez.R  # sensibilidade, complementares e robustez
 ```
@@ -78,6 +79,11 @@ R (≥ 4.6). Pacotes: `read.dbc`, `dplyr`, `tidyr`, `lubridate`, `sidrar`, `geob
 `sf`, `terra`, `exactextractr`, `readxl`, `MASS`, `spdep`, `spatialreg`,
 `sandwich`, `lmtest`, `geepack`, `ggplot2`, `ggspatial`, `forcats`, `patchwork`,
 `scales`, `officer`, `flextable`, `png`.
+
+As versões exatas de R e de cada pacote usadas para produzir os resultados estão
+em [`AMBIENTE.md`](AMBIENTE.md). Os scripts instalam pacotes ausentes em tempo de
+execução, o que traz a versão corrente do CRAN — para reprodução fiel, instale
+antes as versões registradas ali.
 A leitura dos `.dbc` do DATASUS (`read.dbc`) requer **Rtools** (compilação).
 
 ## Licença
@@ -94,6 +100,9 @@ Ao utilizar estes dados ou códigos, cite o repositório (metadados em `CITATION
 
 > Janssen MA, Resende ES, Fernandes AP. LeptoClima-MG: dados e códigos — Fatores
 > climáticos e socioambientais associados à incidência de leptospirose em Minas Gerais,
-> Brasil, 2010–2024. v1.1.0. Zenodo; 2026. https://doi.org/10.5281/zenodo.20617304
+> Brasil, 2010–2024. v1.1.0. Zenodo; 2026. https://doi.org/10.5281/zenodo.21294415
 
-Quando publicado, cite também o artigo correspondente (submetido à *Cadernos de Saúde Pública*).
+O DOI acima identifica a versão v1.1.0; o DOI de conceito
+<https://doi.org/10.5281/zenodo.20617303> resolve sempre para a versão mais recente.
+
+Quando publicado, cite também o artigo correspondente.

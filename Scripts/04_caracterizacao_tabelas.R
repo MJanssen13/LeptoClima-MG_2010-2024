@@ -116,9 +116,12 @@ t1 <- panel |> group_by(name_meso) |> group_modify(function(d,...){
   tibble(Casos=sum(d$conf), Notif=sum(d$noti), tauP=a[1],pP=a[2], tauP4=b[1],pP4=b[2]) }) |> ungroup() |>
   left_join(pm, by="name_meso") |>
   mutate(inc_conf_num = Casos/pop*1e5) |>
-  transmute(Mesorregiao=name_meso, Casos=int(Casos),                        # confirmados (co-primario)
+  # Contagens ficam SEM separador de milhar no CSV: "1.691" seria lido como 1,691
+  # decimal por leitores de CSV. O separador e formatacao de exibicao e pertence
+  # a tabela do manuscrito, nao ao artefato de dados.
+  transmute(Mesorregiao=name_meso, Casos,                                   # confirmados (co-primario)
             `Incidencia_100mil`=fmt(inc_conf_num, 1),
-            Notificados=int(Notif),                                         # notificados (co-primario)
+            Notificados=Notif,                                              # notificados (co-primario)
             `Incidencia_notif_100mil`=fmt(Notif/pop*1e5, 1),
             `Kendall_semanal`=paste0(fmt(tauP), " (", pf(pP), ")"),         # tau (valor-p exato)
             `Kendall_4SE`=paste0(fmt(tauP4), " (", pf(pP4), ")"),
@@ -201,7 +204,8 @@ if (!is.null(ac) && !is.null(cc)) {
 # GERA O MANUSCRITO EM .DOCX (Times New Roman 12, espacamento simples)
 #   Le ARTIGO_REVISADO.md, converte em .docx, insere Tabelas 1-2 (flextable) e
 #   embute as Figuras 1-3. Citacoes [n]/[n,m] no corpo sao renderizadas como
-#   numeros SOBRESCRITOS (sem colchetes), conforme a norma da CSP.
+#   numeros SOBRESCRITOS (sem colchetes), formatacao anterior; a submissao atual
+#   usa Vancouver entre colchetes, mantida direto no .docx do manuscrito.
 # Saida: ARTIGO_REVISADO.docx
 # =============================================================================
 options(repos = c(CRAN = "https://cloud.r-project.org"))

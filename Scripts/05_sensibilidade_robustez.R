@@ -533,44 +533,58 @@ cat("Salvo: fig_irr_robustos.png\n")
 # =============================================================================
 va <- readRDS("Bancos_rds/validacao_alerta.rds")
 
-# (A) varredura de lead-time
+# Rotulos: o manuscrito escreve "escore de habilidade de Heidke", nunca a sigla
+# inglesa HSS. O escore e ADIMENSIONAL (-1 a 1) e nao pode ser exibido em %;
+# as demais metricas sao proporcoes. Por isso o eixo y traz duas leituras da
+# MESMA posicao: proporcao (%) a esquerda e escore (decimal) a direita.
+HEIDKE <- "Escore de Heidke"
+pct  <- scales::label_percent(accuracy = 1, decimal.mark = ",")   # proporcoes
+esc0 <- scales::label_number(accuracy = 0.01, decimal.mark = ",") # escore (adimensional)
+eixo_heidke <- sec_axis(~ ., name = "Escore de Heidke (adimensional)",
+                        breaks = seq(0, 1, 0.25), labels = esc0)
+
+# (A) varredura da defasagem do gatilho
 L <- matrix(as.numeric(unlist(va$leads)), ncol = 4)
 colnames(L) <- c("lead", "sens", "far", "hss")
 dA <- as.data.frame(L) |>
   pivot_longer(c(sens, far, hss), names_to = "metrica", values_to = "valor") |>
   mutate(metrica = recode(metrica,
-                          sens = "Sensibilidade", far = "Taxa de falso-alarme", hss = "HSS"),
-         metrica = factor(metrica, levels = c("Taxa de falso-alarme", "Sensibilidade", "HSS")))
+                          sens = "Sensibilidade", far = "Taxa de falso-alarme", hss = HEIDKE),
+         metrica = factor(metrica, levels = c("Taxa de falso-alarme", "Sensibilidade", HEIDKE)))
 gA <- ggplot(dA, aes(lead, valor, color = metrica)) +
   geom_line(linewidth = 0.8) + geom_point(size = 2) +
-  scale_color_manual(values = c("Taxa de falso-alarme" = VERM, "Sensibilidade" = AZUL, "HSS" = VERDE)) +
-  scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
+  scale_color_manual(values = setNames(c(VERM, AZUL, VERDE),
+                       c("Taxa de falso-alarme", "Sensibilidade", HEIDKE))) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = pct,
+                     sec.axis = eixo_heidke) +
   scale_x_continuous(breaks = 0:4) +
-  labs(title = "(A) Desempenho por defasagem (lead)",
-       x = "Defasagem do gatilho (semanas epidemiológicas)", y = NULL, color = NULL) +
+  labs(title = "(A) Desempenho por defasagem do gatilho",
+       x = "Defasagem do gatilho (semanas epidemiológicas)",
+       y = "Proporção (%)", color = NULL) +
   tema
 
 # (B) metricas dos gatilhos p80 vs p90
 mtab <- function(x, rotulo) tibble(
   gatilho = rotulo,
-  metrica = c("Sensibilidade", "Especificidade", "VPP", "Falso-alarme", "HSS"),
+  metrica = c("Sensibilidade", "Especificidade", "VPP", "Falso-alarme", HEIDKE),
   valor   = c(x$sens, x$spec, x$ppv, x$far, x$hss))
 dB <- bind_rows(mtab(va$p80, "Chuva 4 SE > p80"), mtab(va$p90, "Chuva 4 SE > p90")) |>
   mutate(metrica = factor(metrica,
-           levels = c("Sensibilidade", "Especificidade", "VPP", "Falso-alarme", "HSS")))
+           levels = c("Sensibilidade", "Especificidade", "VPP", "Falso-alarme", HEIDKE)),
+         rotulo = ifelse(metrica == HEIDKE, esc0(valor), pct(valor)))  # % so p/ proporcoes
 gB <- ggplot(dB, aes(metrica, valor, fill = gatilho)) +
   geom_col(position = position_dodge(0.75), width = 0.7) +
-  geom_text(aes(label = scales::percent(valor, accuracy = 1)),
+  geom_text(aes(label = rotulo),
             position = position_dodge(0.75), vjust = -0.4, size = 2.7) +
   scale_fill_manual(values = c("Chuva 4 SE > p80" = AZUL, "Chuva 4 SE > p90" = CINZA)) +
-  scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
-  labs(title = "(B) Métricas no teste (2020–2024), gatilho a 2 SE",
-       x = NULL, y = NULL, fill = NULL) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = pct,
+                     sec.axis = eixo_heidke) +
+  labs(title = "(B) Métricas no teste (2020–2024), gatilho a 2 semanas epidemiológicas (SE)",
+       x = "Métrica (VPP = valor preditivo positivo)", y = "Proporção (%)", fill = NULL) +
   tema + theme(axis.text.x = element_text(angle = 20, hjust = 1))
 
-g2 <- gA / gB +
-  plot_annotation(title = "Validação preditiva do alerta climatológico (treino ≤ 2019 | teste 2020–2024)",
-                  theme = theme(plot.title = element_text(face = "bold", size = 13)))
+# Sem titulo embutido: a legenda da figura vai no texto do material suplementar.
+g2 <- gA / gB
 ggsave("Resultados/Figuras/fig_validacao_alerta.png", g2, width = 9, height = 8.5, dpi = 1200)
 cat("Salvo: fig_validacao_alerta.png\n")
 

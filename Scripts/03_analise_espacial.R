@@ -1,8 +1,10 @@
 # =============================================================================
 # 03 - ANALISE ESPACIAL
 #   Moran global (uni e bivariado), variaveis extras + densidade, LISA e mapas,
-#   mapas extras (notificados/LISA bivariado), diagramas de Moran e Figura 3.
-#   Reune os antigos scripts 08, 16, 09, 10, 11 e 19_figura3_combinada.
+#   mapas extras (notificados/LISA bivariado) e diagramas de Moran.
+#   Reune os antigos scripts 08, 16, 09, 10 e 11.
+#   O mapa do LISA bivariado (mapa_lisa_bivariado_precip.png) e a Figura 3 do
+#   manuscrito; nao ha painel duplo com o diagrama de dispersao.
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -165,8 +167,8 @@ lisa_cluster <- function(x) {
   quad <- ifelse(zx > 0 & lagz > 0, "Alto-Alto",
           ifelse(zx < 0 & lagz < 0, "Baixo-Baixo",
           ifelse(zx > 0 & lagz < 0, "Alto-Baixo", "Baixo-Alto")))
-  factor(ifelse(lm[, 5] < 0.05, quad, "Nao significativo"),
-         levels = c("Alto-Alto", "Baixo-Baixo", "Alto-Baixo", "Baixo-Alto", "Nao significativo"))
+  factor(ifelse(lm[, 5] < 0.05, quad, "Não significativo"),
+         levels = c("Alto-Alto", "Baixo-Baixo", "Alto-Baixo", "Baixo-Alto", "Não significativo"))
 }
 muni$lisa_conf <- lisa_cluster(muni$inc_conf)
 muni$lisa_noti <- lisa_cluster(muni$inc_noti)
@@ -250,7 +252,7 @@ ggsave("Resultados/Figuras/mapa_incidencia_confirmados.png", montar_mapa(m1),
 
 # Mapa 2 - clusters LISA (confirmados)
 cores <- c("Alto-Alto" = "#d7191c", "Baixo-Baixo" = "#2c7bb6", "Alto-Baixo" = "#fdae61",
-           "Baixo-Alto" = "#abd9e9", "Nao significativo" = "grey90")
+           "Baixo-Alto" = "#abd9e9", "Não significativo" = "grey90")
 m2 <- ggplot(muni) +
   geom_sf(aes(fill = lisa_conf), color = "grey70", linewidth = 0.05) +
   scale_fill_manual(values = cores, name = "Cluster LISA", drop = FALSE,
@@ -288,7 +290,7 @@ base_carto <- list(
   theme_minimal(base_size = 11),
   theme(axis.text = element_blank(), panel.grid = element_blank()))
 cores <- c("Alto-Alto" = "#d7191c", "Baixo-Baixo" = "#2c7bb6", "Alto-Baixo" = "#fdae61",
-           "Baixo-Alto" = "#abd9e9", "Nao significativo" = "grey90")
+           "Baixo-Alto" = "#abd9e9", "Não significativo" = "grey90")
 
 # ---- Notificados: incidencia + LISA ----------------------------------------
 ggsave("Resultados/Figuras/mapa_incidencia_notificados.png",
@@ -316,8 +318,8 @@ biv_lisa <- function(x, y, nsim = 999) {
   quad <- ifelse(zx > 0 & lagy > 0, "Alto-Alto",
           ifelse(zx < 0 & lagy < 0, "Baixo-Baixo",
           ifelse(zx > 0 & lagy < 0, "Alto-Baixo", "Baixo-Alto")))
-  factor(ifelse(p < 0.05, quad, "Nao significativo"),
-         levels = c("Alto-Alto", "Baixo-Baixo", "Alto-Baixo", "Baixo-Alto", "Nao significativo"))
+  factor(ifelse(p < 0.05, quad, "Não significativo"),
+         levels = c("Alto-Alto", "Baixo-Baixo", "Alto-Baixo", "Baixo-Alto", "Não significativo"))
 }
 muni$lisa_biv <- biv_lisa(muni$inc_conf, muni$precip)
 cat("LISA bivariado (incidencia confirmados x precipitacao):\n"); print(table(muni$lisa_biv))
@@ -354,7 +356,7 @@ muni <- readRDS("Bancos_rds/dados_espaciais_municipal.rds")
 sf_use_s2(FALSE)
 nb <- poly2nb(muni, queen = TRUE); W <- nb2listw(nb, style = "W", zero.policy = TRUE)
 cores <- c("Alto-Alto" = "#d7191c", "Baixo-Baixo" = "#2c7bb6", "Alto-Baixo" = "#fdae61",
-           "Baixo-Alto" = "#abd9e9", "Nao significativo" = "grey80")
+           "Baixo-Alto" = "#abd9e9", "Não significativo" = "grey80")
 
 scatter <- function(x, yvar, cluster, titulo, ylab) {
   zx   <- as.numeric(scale(x))                              # incidencia padronizada (z)
@@ -391,35 +393,3 @@ ggsave("Resultados/Figuras/scatter_moran_bivariado.png", g2, width = 8, height =
 
 cat("Diagramas de Moran salvos em Resultados/Figuras/:\n",
     "- scatter_moran_univariado.png\n - scatter_moran_bivariado.png\n")
-
-# -----------------------------------------------------------------------------
-# [bloco: 19_figura3_combinada.R]
-# -----------------------------------------------------------------------------
-# =============================================================================
-# FIGURA 3 (painel duplo): (A) mapa do LISA bivariado (incidencia x precipitacao)
-# + (B) diagrama de dispersao de Moran bivariado. Junta dois PNGs ja gerados
-# (scripts 10 e 11) em uma unica figura, respeitando o limite de 5 ilustracoes da CSP.
-# Entradas: Resultados/Figuras/{mapa_lisa_bivariado_precip,scatter_moran_bivariado}.png
-# Saida:    Resultados/Figuras/fig3_lisa_biv_scatter.png
-# =============================================================================
-options(repos = c(CRAN = "https://cloud.r-project.org"))
-if (!requireNamespace("magick", quietly = TRUE)) install.packages("magick")
-suppressMessages(library(magick))
-
-a <- image_read("Resultados/Figuras/mapa_lisa_bivariado_precip.png")
-b <- image_read("Resultados/Figuras/scatter_moran_bivariado.png")
-H <- 1100                                                   # altura comum (px)
-
-# Adiciona uma faixa branca no topo e coloca o rotulo (A)/(B) nela, acima do
-# titulo de cada painel, evitando a sobreposicao com o titulo/legenda.
-rotular <- function(img, lab) {
-  img   <- image_resize(img, geometry_size_pixels(height = H))
-  faixa <- image_blank(width = image_info(img)$width, height = 80, color = "white")
-  image_annotate(image_append(c(faixa, img), stack = TRUE),
-                 lab, size = 60, weight = 700, gravity = "northwest", location = "+15+8")
-}
-a2 <- rotular(a, "(A)")
-b2 <- rotular(b, "(B)")
-combo <- image_border(image_append(c(a2, b2)), "white", "25x20")
-image_write(combo, "Resultados/Figuras/fig3_lisa_biv_scatter.png")
-cat("Figura 3 salva:", paste(image_info(combo)[c("width","height")], collapse = "x"), "px\n")

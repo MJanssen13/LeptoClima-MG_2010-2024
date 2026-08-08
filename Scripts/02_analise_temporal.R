@@ -159,17 +159,33 @@ df <- full_join(prm, dplyr::select(inc, ym, incidencia), by = "ym") |> arrange(y
   mutate(incidencia = coalesce(incidencia, 0))
 esc <- max(df$precip, na.rm = TRUE) / max(df$incidencia, na.rm = TRUE)
 
+# Titulo/subtitulo NAO vao embutidos na imagem (exigencia da revista: legenda
+# fora da figura). A chave de leitura do eixo duplo, que estava no subtitulo,
+# passa a ser uma legenda de cores no topo do painel (barras x linha).
+# Rotulos numericos com virgula decimal (norma pt-BR).
+SERIE_PR  <- "Precipitação"
+SERIE_INC <- "Incidência (casos confirmados)"
+brk_x <- seq(as.Date("2010-01-01"), as.Date("2024-01-01"), by = "2 years")  # sem marca alem dos dados
+
 g <- ggplot(df, aes(ym)) +
-  geom_col(aes(y = precip), fill = "#4575b4", alpha = 0.55) +
-  geom_line(aes(y = incidencia * esc), color = "#d73027", linewidth = 0.6) +
+  geom_col(aes(y = precip, fill = SERIE_PR), alpha = 0.55) +
+  geom_line(aes(y = incidencia * esc, color = SERIE_INC), linewidth = 0.6) +
+  scale_fill_manual(values = setNames("#4575b4", SERIE_PR), name = NULL) +
+  scale_color_manual(values = setNames("#d73027", SERIE_INC), name = NULL) +
   scale_y_continuous(name = "Precipitação (mm/mês)",
-                     sec.axis = sec_axis(~ . / esc, name = "Incidência (casos/100 mil hab.)")) +
-  scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-  labs(title = "Incidência mensal de leptospirose (confirmados) e precipitação",
-       subtitle = "Minas Gerais, 2010–2024  (barras = precipitação; linha = incidência)", x = NULL) +
+                     labels = scales::label_number(decimal.mark = ","),
+                     sec.axis = sec_axis(~ . / esc, name = "Incidência (casos/100 mil hab.)",
+                                         labels = scales::label_number(accuracy = 0.1,
+                                                                       decimal.mark = ","))) +
+  scale_x_date(breaks = brk_x, date_labels = "%Y") +
+  labs(x = "Ano") +
   theme_minimal(base_size = 11) +
   theme(axis.title.y.left = element_text(color = "#4575b4"),
         axis.title.y.right = element_text(color = "#d73027"),
-        panel.grid.minor = element_blank())
+        panel.grid.minor = element_blank(),
+        legend.position = "top", legend.direction = "horizontal",
+        legend.justification = "left", legend.box = "horizontal",
+        legend.box.spacing = unit(2, "pt"), legend.margin = margin(0, 0, 0, 0),
+        legend.key.size = unit(0.45, "cm"), legend.text = element_text(size = 9.5))
 ggsave("Resultados/Figuras/fig_serie_temporal.png", g, width = 10, height = 5, dpi = 1200)
 cat("Figura salva: Resultados/Figuras/fig_serie_temporal.png\n")

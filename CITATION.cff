@@ -5,7 +5,12 @@ type: software
 version: v1.1.0
 date-released: "2026-07-10"
 license: CC-BY-4.0
+doi: "10.5281/zenodo.21294415"
 repository-code: "https://github.com/MJanssen13/LeptoClima-MG_2010-2024"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20617303"
+    description: "DOI de conceito, que resolve sempre para a versão mais recente"
 authors:
   - family-names: Janssen
     given-names: Miguel Antonio
