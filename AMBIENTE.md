@@ -20,9 +20,11 @@ Registrado automaticamente; nao editar a mao.
 | ggplot2 | 4.0.3 |
 | ggspatial | 1.1.10 |
 | grid | 4.6.0 |
+| Kendall | 2.2.2 |
 | lmtest | 0.9.40 |
 | lubridate | 1.9.5 |
 | MASS | 7.3.65 |
+| mgcv | 1.9.4 |
 | officer | 0.7.5 |
 | patchwork | 1.3.2 |
 | png | 0.1.9 |

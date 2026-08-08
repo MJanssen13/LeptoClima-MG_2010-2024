@@ -33,8 +33,8 @@ origem (`# [bloco: ...]`).
 | 01 | `01_tratamento_dados.R` | Reconstrói os bancos a partir dos dados brutos: população e malha (IBGE), casos de leptospirose (SINAN/DATASUS), clima (BR-DWGD: precip./temp. e RH/Rs/u2/ETo), saneamento (Censo 2022) e IVS (Atlas IPEA). *(antigos 01–05, 15)* | bancos em `Bancos_rds/` |
 | 02 | `02_analise_temporal.R` | Correlação de Kendall (SE, lag 2; soma móvel 4 SE), modelo Binomial Negativa (precip. + temp.) e figura da série temporal. *(antigos 06, 07, 12)* | `dados_temporais`, `fig_serie_temporal.png` |
 | 03 | `03_analise_espacial.R` | Moran global (uni e bivariado), variáveis extras + densidade, LISA e mapas, mapas de notificados/LISA bivariado e diagramas de Moran. *(antigos 08, 16, 09, 10, 11)* | `dados_espaciais_municipal`, mapas e diagramas |
-| 04 | `04_caracterizacao_tabelas.R` | Caracterização descritiva dos casos, Tabelas 1 e 2 (CSV) e manuscrito em `.docx` (uso local; a saída `.docx` não é versionada). *(antigos 17, 13, 14)* | `tabela1.csv`, `tabela2.csv` |
-| 05 | `05_sensibilidade_robustez.R` | Sensibilidade (regionalização e defasagem), análises complementares (BN sazonal e erro espacial multivariável), confundimento por confirmação, validação do alerta, IC robustos, FDR e figuras de robustez. *(antigos 18, 19_analises_complementares, 20–24)* | `sensibilidade`, `analises_complementares`, `confirmacao_covariavel`, `validacao_alerta`, `ic_robustos`, `fdr`, figuras de robustez |
+| 04 | `04_caracterizacao_tabelas.R` | Caracterização descritiva dos casos; tendência anual (Mann-Kendall) de confirmados, notificados e da taxa de confirmação; ocupação (CBO) e exposição agropecuária; Tabelas 1 e 2 (CSV) e manuscrito em `.docx` (uso local; a saída `.docx` não é versionada). *(antigos 17, 13, 14; blocos 25–26)* | `tabela1.csv`, `tabela2.csv`, `tendencia_anual`, `ocupacao_exposicao` |
+| 05 | `05_sensibilidade_robustez.R` | Sensibilidade (regionalização e defasagem), análises complementares (BN sazonal e erro espacial multivariável), confundimento por confirmação, validação do alerta, IC robustos, FDR e figuras de robustez; confirmação laboratorial por critério, decomposição da variância do gradiente, modelo binomial da confirmação induzida pela chuva, modelo espacial de contagem (BN com campo ICAR/BYM) e Benjamini-Hochberg no LISA uni e bivariado. *(antigos 18, 19_analises_complementares, 20–24; blocos 27–31)* | `sensibilidade`, `analises_complementares`, `confirmacao_covariavel`, `validacao_alerta`, `ic_robustos`, `fdr`, `confirmacao_laboratorial`, `decomposicao_variancia`, `binomial_confirmacao`, `espacial_binomial_negativa`, `lisa_bh`, figuras de robustez |
 
 O script **01** reconstrói os bancos a partir dos dados brutos. Como os bancos
 processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
@@ -44,6 +44,10 @@ processados (`Bancos_rds/`) estão versionados, é possível rodar as análises
 > **Nota:** ao reunir os scripts numa mesma sessão de R, o `MASS` (carregado no
 > modelo temporal) mascara `dplyr::select`; por isso a chamada afetada em
 > `02_analise_temporal.R` é qualificada como `dplyr::select`.
+
+> **Tempo de execução:** o script **05** inclui modelos espaciais de contagem
+> (campo ICAR/BYM por REML) e LISA por permutação com 99.999 réplicas; a
+> execução completa leva cerca de 15 minutos. Os demais rodam em segundos.
 
 ## Fontes de dados brutos (`Dados_brutos/`)
 
@@ -77,8 +81,8 @@ Rscript Scripts/05_sensibilidade_robustez.R  # sensibilidade, complementares e r
 
 R (≥ 4.6). Pacotes: `read.dbc`, `dplyr`, `tidyr`, `lubridate`, `sidrar`, `geobr`,
 `sf`, `terra`, `exactextractr`, `readxl`, `MASS`, `spdep`, `spatialreg`,
-`sandwich`, `lmtest`, `geepack`, `ggplot2`, `ggspatial`, `forcats`, `patchwork`,
-`scales`, `officer`, `flextable`, `png`.
+`sandwich`, `lmtest`, `geepack`, `mgcv`, `Kendall`, `ggplot2`, `ggspatial`,
+`forcats`, `patchwork`, `scales`, `officer`, `flextable`, `png`.
 
 As versões exatas de R e de cada pacote usadas para produzir os resultados estão
 em [`AMBIENTE.md`](AMBIENTE.md). Os scripts instalam pacotes ausentes em tempo de
