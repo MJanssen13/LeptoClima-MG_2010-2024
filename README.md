@@ -104,9 +104,10 @@ Ao utilizar estes dados ou códigos, cite o repositório (metadados em `CITATION
 
 > Janssen MA, Resende ES, Fernandes AP. LeptoClima-MG: dados e códigos — Fatores
 > climáticos e socioambientais associados à incidência de leptospirose em Minas Gerais,
-> Brasil, 2010–2024. v1.1.0. Zenodo; 2026. https://doi.org/10.5281/zenodo.21294415
+> Brasil, 2010–2024. Zenodo; 2026. https://doi.org/10.5281/zenodo.20617303
 
-O DOI acima identifica a versão v1.1.0; o DOI de conceito
-<https://doi.org/10.5281/zenodo.20617303> resolve sempre para a versão mais recente.
+O DOI acima é o de **conceito**: resolve sempre para a versão mais recente, hoje a
+**v1.2.0**. Para fixar uma versão específica, use o DOI próprio dela, listado na
+página do depósito.
 
 Quando publicado, cite também o artigo correspondente.
