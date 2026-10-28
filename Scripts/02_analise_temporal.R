@@ -125,6 +125,32 @@ cat(sprintf("  precip sozinho: %.3f  ->  ajustado p/ temp: %.3f\n", uni("pr_z"),
 cat(sprintf("  temp   sozinho: %.3f  ->  ajustado p/ precip: %.3f\n", uni("t_z"),
             exp(coef(fit_nb("noti"))["t_z"])))
 
+# Diagnosticos (pedidos na revisao): superdispersao pela razao de
+# verossimilhancas contra o Poisson, e dependencia serial pela autocorrelacao
+# de primeira ordem dos residuos de Pearson em cada mesorregiao, antes e
+# depois do ajuste pela sazonalidade (mes de inicio dos sintomas).
+d$mes <- factor(as.integer(format(as.Date(d$sem_ini), "%m")))
+ac1 <- function(m) {
+  x <- data.frame(meso = d$meso, s = d$sem_ini, r = residuals(m, type = "pearson")) |>
+    arrange(meso, s) |> group_by(meso) |> mutate(r1 = dplyr::lag(r)) |>
+    ungroup() |> filter(!is.na(r1))
+  cor(x$r, x$r1)
+}
+cat("\n=== Diagnosticos do modelo temporal ===\n")
+for (y in c("conf", "noti")) {
+  m  <- suppressWarnings(fit_nb(y))
+  mp <- glm(reformulate(c("pr_z", "t_z", "meso", "yr", "offset(log(pop))"), response = y),
+            family = poisson, data = d)
+  ms <- suppressWarnings(glm.nb(reformulate(c("pr_z", "t_z", "meso", "yr", "mes",
+                                              "offset(log(pop))"), response = y), data = d))
+  lr <- 2 * (as.numeric(logLik(m)) - as.numeric(logLik(mp)))
+  cat(sprintf("  %s: theta=%.2f | razao de verossimilhancas BN vs Poisson=%.1f (p=%.2g)\n",
+              ifelse(y == "noti", "NOTIFICADOS", "CONFIRMADOS"), m$theta, lr,
+              pchisq(lr, 1, lower.tail = FALSE)))
+  cat(sprintf("      autocorrelacao lag 1 dos residuos: %.3f | com sazonalidade: %.3f\n",
+              ac1(m), ac1(ms)))
+}
+
 # -----------------------------------------------------------------------------
 # [bloco: 12_figura_temporal.R]
 # -----------------------------------------------------------------------------
