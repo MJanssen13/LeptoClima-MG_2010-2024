@@ -100,6 +100,8 @@ cat("\nSalvo: Bancos_rds/dados_espaciais_municipal.rds (sf p/ mapas)\n")
 # Saida:   Bancos_rds/dados_espaciais_municipal.rds (com novas colunas)
 # =============================================================================
 options(repos = c(CRAN = "https://cloud.r-project.org"))
+# st_area() sobre coordenadas geograficas com sf_use_s2(FALSE) exige lwgeom
+if (!requireNamespace("lwgeom", quietly = TRUE)) install.packages("lwgeom")
 suppressMessages({library(dplyr); library(sf); library(spdep)})
 set.seed(1)
 
@@ -239,16 +241,34 @@ base_carto <- list(
   theme_void(base_size = 11)
 )
 
-# Mapa 1 - incidencia acumulada (confirmados)
+# Mapa 1 - incidencia acumulada (confirmados), em CLASSES
+#   A escala continua em raiz quadrada era de leitura dificil: 46,5% dos
+#   municipios nao tem caso confirmado e a cauda chega a 313,5/100 mil hab., de
+#   modo que a barra de cores nao permitia recuperar o valor de um municipio.
+#   As classes isolam o zero e adotam cortes redondos; as cores sao a propria
+#   paleta rocket amostrada em quatro passos, mantendo o padrao das figuras.
+QUEBRAS   <- c(-Inf, 0, 10, 25, 50, Inf)
+ROTULOS   <- c("Sem caso confirmado", "≤ 10", "> 10 a 25", "> 25 a 50", "> 50")
+CORES_INC <- setNames(c("grey88", "#F7CDB0", "#F16646", "#B21758", "#4C1D4B"), ROTULOS)
+muni$inc_conf_cl <- cut(muni$inc_conf, breaks = QUEBRAS, labels = ROTULOS, right = TRUE)
+cat("
+Figura 2 - municipios por classe de incidencia:
+")
+print(table(muni$inc_conf_cl))
 m1 <- ggplot(muni) +
-  geom_sf(aes(fill = inc_conf), color = "grey85", linewidth = 0.05) +
-  scale_fill_viridis_c(option = "rocket", direction = -1, trans = "sqrt",
-                       name = "Incidência (casos/100 mil hab.)",
-                       guide = guide_colourbar(title.position = "top")) +
+  geom_sf(aes(fill = inc_conf_cl), color = "grey85", linewidth = 0.05) +
+  scale_fill_manual(values = CORES_INC, drop = FALSE,
+                    name = "Incidência acumulada (casos/100 mil hab.)",
+                    guide = guide_legend(title.position = "top", nrow = 1)) +
   base_carto +
-  theme(legend.key.width = unit(1.6, "cm"), legend.key.height = unit(0.45, "cm"))
-ggsave("Resultados/Figuras/mapa_incidencia_confirmados.png", montar_mapa(m1),
+  theme(legend.key.width = unit(1.1, "cm"), legend.key.height = unit(0.4, "cm"))
+mapa_inc_conf <- montar_mapa(m1)
+ggsave("Resultados/Figuras/mapa_incidencia_confirmados.png", mapa_inc_conf,
        width = 10, height = 7, dpi = 1200, bg = "white")
+# Versao vetorial (PDF) exigida pela revista para graficos e mapas; cairo_pdf
+# embute as fontes, evitando substituicao no sistema de submissao.
+ggsave("Resultados/Figuras/mapa_incidencia_confirmados.pdf", mapa_inc_conf,
+       width = 10, height = 7, device = cairo_pdf, bg = "white")
 
 # Mapa 2 - clusters LISA (confirmados)
 cores <- c("Alto-Alto" = "#d7191c", "Baixo-Baixo" = "#2c7bb6", "Alto-Baixo" = "#fdae61",
@@ -324,11 +344,37 @@ biv_lisa <- function(x, y, nsim = 999) {
 muni$lisa_biv <- biv_lisa(muni$inc_conf, muni$precip)
 cat("LISA bivariado (incidencia confirmados x precipitacao):\n"); print(table(muni$lisa_biv))
 
-ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.png",
-  ggplot(muni) + geom_sf(aes(fill = lisa_biv), color = "grey70", linewidth = 0.05) +
-    scale_fill_manual(values = cores, name = "Cluster LISA\nbivariado", drop = FALSE) +
-    base_carto,
-  width = 9, height = 7, dpi = 1200)
+# Figura 3: mesmo padrao cartografico da Figura 2 (rosa dos ventos e INSET DO
+# BRASIL), porem com a legenda VERTICAL no painel lateral, ABAIXO do inset.
+# A legenda horizontal no topo (padrao de montar_mapa) invadia a borda norte
+# do estado, por isso a composicao aqui e propria em vez de reusar a funcao.
+mapa_lisa_biv <- local({
+  mp <- ggplot(muni) +
+    geom_sf(aes(fill = lisa_biv), color = "grey70", linewidth = 0.05) +
+   scale_fill_manual(values = cores, name = "Cluster LISA bivariado", drop = FALSE) +
+    annotation_scale(location = "bl", width_hint = 0.25, style = "bar",
+                     bar_cols = c("gray15","white"), text_cex = 0.8) +
+    theme_void(base_size = 11) +
+    theme(plot.background  = element_rect(fill = "white", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          legend.position = "right", legend.direction = "vertical",
+          legend.title = element_text(size = 11, face = "bold"),
+          legend.text  = element_text(size = 10),
+          legend.key.size = unit(0.55, "cm"))
+  legenda    <- cowplot::get_legend(mp)
+  mapa_clean <- mp + theme(legend.position = "none")
+  cowplot::ggdraw() +
+    cowplot::draw_grob(grid::rectGrob(gp = grid::gpar(fill = "white", col = NA))) +
+    cowplot::draw_plot(mapa_clean,          x = 0.00, y = 0.00, width = 0.76, height = 1.00) +
+    cowplot::draw_plot(plot_rosa_ventos(),  x = 0.79, y = 0.78, width = 0.19, height = 0.20) +
+    cowplot::draw_plot(inset_brasil(),      x = 0.75, y = 0.42, width = 0.24, height = 0.34) +
+    cowplot::draw_plot(legenda,             x = 0.76, y = 0.02, width = 0.23, height = 0.38)
+})
+ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.png", mapa_lisa_biv,
+       width = 10, height = 7, dpi = 1200, bg = "white")
+# Versao vetorial (PDF) exigida pela revista
+ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.pdf", mapa_lisa_biv,
+       width = 10, height = 7, device = cairo_pdf, bg = "white")
 
 saveRDS(muni, "Bancos_rds/dados_espaciais_municipal.rds")
 cat("\nMapas extras salvos em Resultados/Figuras/:\n",

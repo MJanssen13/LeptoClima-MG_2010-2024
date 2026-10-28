@@ -188,4 +188,8 @@ g <- ggplot(df, aes(ym)) +
         legend.box.spacing = unit(2, "pt"), legend.margin = margin(0, 0, 0, 0),
         legend.key.size = unit(0.45, "cm"), legend.text = element_text(size = 9.5))
 ggsave("Resultados/Figuras/fig_serie_temporal.png", g, width = 10, height = 5, dpi = 1200)
+# Versao vetorial (PDF) exigida pela revista para graficos e mapas; cairo_pdf
+# embute as fontes, evitando substituicao no sistema de submissao.
+ggsave("Resultados/Figuras/fig_serie_temporal.pdf", g, width = 10, height = 5,
+       device = cairo_pdf, bg = "white")
 cat("Figura salva: Resultados/Figuras/fig_serie_temporal.png\n")

@@ -1313,3 +1313,123 @@ saveRDS(list(univariado = list(analitico = u_a, perm999 = u_9, perm999_dobrado =
         "Bancos_rds/lisa_bh.rds")
 options(width = w0)   # restaura a largura de impressao
 cat("\nLISA_BH_OK\n")
+
+# -----------------------------------------------------------------------------
+# [bloco: 32_estabilidade_ivs.R]
+# -----------------------------------------------------------------------------
+# =============================================================================
+# ESTABILIDADE TEMPORAL DO IVS E COMPARACAO COM INDICE CENSITARIO
+#   Responde a critica de que o IVS, calculado sobre o Censo 2010, poderia nao
+#   representar o contexto socioeconomico do fim do periodo analisado (2024).
+#   (i)  mede a estabilidade do ORDENAMENTO municipal entre os Censos 2010 e
+#        2022, em indicadores comparaveis (saneamento e alfabetizacao);
+#   (ii) constroi um indice de vulnerabilidade censitario para cada ano e
+#        reestima as analises espaciais com cada medida, verificando se a
+#        conclusao do estudo depende da escolha.
+#   Observacao: usa a API HTTP do SIDRA em vez do pacote sidrar, que falhou
+#   ("nao e possivel abrir a conexao") no ambiente de execucao.
+#   Ressalva: a taxa de alfabetizacao tem cortes etarios distintos nos dois
+#   censos (10+ em 2010, 15+ em 2022); a comparacao e de postos, nao de niveis.
+# Entradas: Bancos_rds/dados_espaciais_municipal.rds, saneamento_mg_2022.rds,
+#           vulnerabilidade_mg.rds + SIDRA (t/3218 2010, t/1383 2010, t/9543 2022)
+# Saidas  : console + Bancos_rds/estabilidade_ivs.rds
+# =============================================================================
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+for (p in c("jsonlite")) if (!requireNamespace(p, quietly = TRUE)) install.packages(p)
+suppressMessages({library(dplyr); library(sf); library(spdep); library(spatialreg)
+                  library(MASS); library(jsonlite)})
+z <- function(x) as.numeric(scale(x))
+
+sidra <- function(url) {
+  d <- jsonlite::fromJSON(url, simplifyDataFrame = TRUE)
+  cab <- d[1, ]; dados <- d[-1, , drop = FALSE]
+  list(cab = cab, dados = dados)
+}
+pct_cat <- function(url, campo_cat, cats) {   # % das categorias sobre o Total
+  r <- sidra(url); d <- r$dados
+  out <- d |>
+    transmute(cod = as.integer(D1C), cat = .data[[campo_cat]],
+              val = suppressWarnings(as.numeric(V))) |>
+    filter(!is.na(val))
+  tot <- out |> filter(cat == "0") |> dplyr::select(cod, total = val)
+  adq <- out |> filter(cat %in% cats) |> group_by(cod) |>
+    summarise(adq = sum(val), .groups = "drop")
+  inner_join(tot, adq, by = "cod") |>
+    mutate(pct = round(100 * adq / total, 2)) |> dplyr::select(cod, pct)
+}
+
+B <- "https://apisidra.ibge.gov.br/values/t/3218/n6/in%20n3%2031/p/2010/v/96"
+cat("Baixando Censo 2010 (saneamento) e alfabetizacao 2010/2022 do SIDRA...\n")
+s10 <- pct_cat(paste0(B, "/c61/0,92853/c67/0/c299/0/c309/0"), "D4C", "92853") |> rename(agua = pct) |>
+  inner_join(pct_cat(paste0(B, "/c61/0/c67/0/c299/0,9678,9679/c309/0"), "D6C",
+                     c("9678", "9679")) |> rename(esgoto = pct), by = "cod") |>
+  inner_join(pct_cat(paste0(B, "/c61/0/c67/0,2520/c299/0/c309/0"), "D5C", "2520") |>
+               rename(lixo = pct), by = "cod")
+taxa <- function(url) {
+  r <- sidra(url)
+  r$dados |> transmute(cod = as.integer(D1C), v = suppressWarnings(as.numeric(V))) |> filter(!is.na(v))
+}
+a10 <- taxa("https://apisidra.ibge.gov.br/values/t/1383/n6/in%20n3%2031/p/2010/v/1646/c2/6794") |> rename(alfab_10 = v)
+a22 <- taxa(paste0("https://apisidra.ibge.gov.br/values/t/9543/n6/in%20n3%2031/p/2022/v/2513",
+                   "/c2/6794/c86/95251/c287/100362")) |> rename(alfab_22 = v)
+
+muni <- readRDS("Bancos_rds/dados_espaciais_municipal.rds")
+s22  <- readRDS("Bancos_rds/saneamento_mg_2022.rds")
+vul  <- readRDS("Bancos_rds/vulnerabilidade_mg.rds")
+idx  <- function(a, e, l, f) -(z(a) + z(e) + z(l) + z(f)) / 4
+
+d <- muni |> st_drop_geometry() |>
+  dplyr::select(cod, conf, noti, pop, precip, temp, logdens, ivs) |>
+  inner_join(s10, by = "cod") |>
+  inner_join(s22 |> rename(agua22 = agua, esgoto22 = esgoto, lixo22 = lixo), by = "cod") |>
+  inner_join(a10, by = "cod") |> inner_join(a22, by = "cod") |>
+  inner_join(vul[, c("cod", "ivs_iu", "ivs_ch", "ivs_rt")], by = "cod") |>
+  mutate(vul10 = idx(agua, esgoto, lixo, alfab_10),
+         vul22 = idx(agua22, esgoto22, lixo22, alfab_22),
+         san10 = (z(agua) + z(esgoto) + z(lixo)) / 3)
+
+cat("\n== (i) ESTABILIDADE DO ORDENAMENTO ENTRE OS CENSOS ==\n")
+cat(sprintf("  indice censitario 2010 x 2022 : Spearman %.3f\n",
+            cor(d$vul10, d$vul22, method = "spearman")))
+for (v in c("agua", "esgoto", "lixo")) {
+  cat(sprintf("  %-7s 2010 x 2022            : Spearman %.3f\n", v,
+              cor(d[[v]], d[[paste0(v, "22")]], method = "spearman")))
+}
+cat(sprintf("  alfabetizacao 2010 x 2022     : Spearman %.3f\n",
+            cor(d$alfab_10, d$alfab_22, method = "spearman")))
+cat(sprintf("  IVS x indice 2010 = %.3f | IVS x indice 2022 = %.3f  (dif %.3f)\n",
+            cor(d$ivs, d$vul10, method = "spearman"),
+            cor(d$ivs, d$vul22, method = "spearman"),
+            cor(d$ivs, d$vul22, method = "spearman") - cor(d$ivs, d$vul10, method = "spearman")))
+q <- function(x) cut(rank(x), quantile(rank(x), 0:5/5), include.lowest = TRUE, labels = 1:5)
+tb <- table(q(d$vul10), q(d$vul22))
+cat(sprintf("  permanecem no mesmo quintil: %.1f%% | movem-se ate um quintil: %.1f%%\n",
+            100 * sum(diag(tb)) / sum(tb),
+            100 * sum(tb[abs(row(tb) - col(tb)) <= 1]) / sum(tb)))
+
+cat("\n== (ii) A CONCLUSAO DEPENDE DA MEDIDA? (BN com offset) ==\n")
+sf_use_s2(FALSE)
+g <- muni[match(d$cod, muni$cod), ]; nb <- poly2nb(g, queen = TRUE)
+W <- nb2listw(nb, style = "W", zero.policy = TRUE)
+base <- glm.nb(conf ~ z(precip) + z(temp) + z(logdens) + offset(log(pop)), data = d)
+cat(sprintf("  %-10s AIC %8.1f  (sem vulnerabilidade)\n", "nenhuma", AIC(base)))
+for (m in c("ivs", "ivs_iu", "ivs_ch", "ivs_rt", "vul10", "vul22")) {
+  f <- as.formula(sprintf("conf ~ z(precip)+z(temp)+z(%s)+z(logdens)+offset(log(pop))", m))
+  fit <- glm.nb(f, data = d); co <- summary(fit)$coefficients
+  i <- grep("^z\\(", rownames(co))[3]
+  cat(sprintf("  %-10s AIC %8.1f  beta %+.3f (IC95%% %+.3f; %+.3f) p-valor %s\n",
+              m, AIC(fit), co[i, 1], co[i, 1] - 1.96 * co[i, 2], co[i, 1] + 1.96 * co[i, 2],
+              ifelse(co[i, 4] < 0.001, "<0,001", sprintf("%.3f", co[i, 4]))))
+}
+cat("\n  -- IVS e saneamento no mesmo modelo --\n")
+f2 <- glm.nb(conf ~ z(precip) + z(temp) + z(ivs) + z(san10) + z(logdens) + offset(log(pop)), data = d)
+co <- summary(f2)$coefficients
+for (t in c("z(ivs)", "z(san10)")) {
+  i <- which(rownames(co) == t)
+  cat(sprintf("  %-10s beta %+.3f (IC95%% %+.3f; %+.3f) p-valor %s\n", t, co[i, 1],
+              co[i, 1] - 1.96 * co[i, 2], co[i, 1] + 1.96 * co[i, 2],
+              ifelse(co[i, 4] < 0.001, "<0,001", sprintf("%.3f", co[i, 4]))))
+}
+cat(sprintf("  AIC do modelo conjunto: %.1f\n", AIC(f2)))
+saveRDS(d, "Bancos_rds/estabilidade_ivs.rds")
+cat("\nSalvo: Bancos_rds/estabilidade_ivs.rds\n")
