@@ -1433,3 +1433,109 @@ for (t in c("z(ivs)", "z(san10)")) {
 cat(sprintf("  AIC do modelo conjunto: %.1f\n", AIC(f2)))
 saveRDS(d, "Bancos_rds/estabilidade_ivs.rds")
 cat("\nSalvo: Bancos_rds/estabilidade_ivs.rds\n")
+
+# -----------------------------------------------------------------------------
+# [bloco: 33_sensibilidade_laboratorial.R]
+# -----------------------------------------------------------------------------
+# =============================================================================
+# SENSIBILIDADE: SO CASOS CONFIRMADOS POR CRITERIO LABORATORIAL
+#   O criterio clinico-epidemiologico exige vinculo com exposicao de risco
+#   (enchente, lama), o que pode acoplar a confirmacao a chuva (vies de
+#   incorporacao). Reestimam-se, so com os confirmados de CRITERIO == "1", as
+#   mesmas especificacoes do manuscrito:
+#   (A) temporal: BN com e sem termo de sazonalidade (mes);
+#   (B) espacial: Moran global, erro espacial em log e BN/BN-ICAR de contagem;
+#   (C) gradiente mesorregional da incidencia acumulada.
+# Saidas : console + Bancos_rds/sensibilidade_laboratorial.rds
+# =============================================================================
+suppressMessages({library(dplyr); library(lubridate); library(MASS); library(sf)
+                  library(spdep); library(spatialreg); library(mgcv)})
+fmtn <- function(x, d = 2) formatC(unname(x), format = "f", digits = d, decimal.mark = ",")
+pfx  <- function(p) ifelse(p < 0.001, "p<0,001", paste0("p=", sub("\\.", ",", sprintf("%.3f", p))))
+ic   <- function(b, se, p, f = identity) sprintf("%s (IC95%% %s; %s) %s", fmtn(f(b)),
+                                              fmtn(f(b - 1.96 * se)), fmtn(f(b + 1.96 * se)), pfx(p))
+
+b <- readRDS("Bancos_rds/base_MG_2010_2024.rds")
+b$conf <- b$confirmado %in% TRUE
+b$lab  <- b$conf & b$CRITERIO %in% "1"
+cat("=============================================================\n")
+cat(" SENSIBILIDADE: CONFIRMADOS POR CRITERIO LABORATORIAL\n")
+cat("=============================================================\n")
+cat(sprintf("Confirmados %d | laboratoriais %d (%s%%) | clinico-epidemiologicos %d | sem criterio %d\n",
+            sum(b$conf), sum(b$lab), fmtn(100 * sum(b$lab) / sum(b$conf), 1),
+            sum(b$conf & b$CRITERIO %in% "2"), sum(b$conf & !(b$CRITERIO %in% c("1", "2")))))
+
+# ---- (A) Temporal ------------------------------------------------------------
+labw <- b |> filter(lab, !is.na(name_meso)) |> count(name_meso, sem_ini, name = "conf_lab")
+d <- readRDS("Bancos_rds/dados_temporais.rds") |>
+  left_join(labw, by = c("name_meso", "sem_ini")) |>
+  mutate(conf_lab = coalesce(conf_lab, 0L)) |>
+  filter(is.finite(pr_l2), is.finite(t_l2), !is.na(pop), pop > 0) |>
+  mutate(pr_z = as.numeric(scale(pr_l2)), t_z = as.numeric(scale(t_l2)),
+         meso = factor(name_meso), yr = ano - 2017, mes = factor(month(sem_ini)))
+cat(sprintf("\n(A) TEMPORAL (%d mesorregiao-semanas) | IRR da precipitacao por desvio-padrao\n", nrow(d)))
+tem <- list()
+for (y in c("conf", "conf_lab")) {
+  m  <- suppressWarnings(glm.nb(reformulate(c("pr_z", "t_z", "meso", "yr", "offset(log(pop))"),
+                                            response = y), data = d))
+  ms <- suppressWarnings(glm.nb(reformulate(c("pr_z", "t_z", "meso", "yr", "mes", "offset(log(pop))"),
+                                            response = y), data = d))
+  s <- summary(m)$coefficients["pr_z", ]; ss <- summary(ms)$coefficients["pr_z", ]
+  cat(sprintf("  %-9s sem sazonalidade: %s | com sazonalidade: %s\n", y,
+              ic(s[1], s[2], s[4], exp), ic(ss[1], ss[2], ss[4], exp)))
+  tem[[y]] <- rbind(base = s, sazonal = ss)
+}
+
+# ---- (B) Espacial ------------------------------------------------------------
+lk6  <- readRDS("Bancos_rds/lookup_muni_meso.rds") |> transmute(cod6 = cod %/% 10L, cod)
+labm <- b |> filter(lab, !is.na(cod6)) |> count(cod6, name = "conf_lab") |>
+  left_join(lk6, by = "cod6") |> dplyr::select(cod, conf_lab)
+muni <- readRDS("Bancos_rds/dados_espaciais_municipal.rds"); sf_use_s2(FALSE)
+z <- function(x) as.numeric(scale(x))
+muni <- muni |> left_join(labm, by = "cod") |>
+  mutate(conf_lab = coalesce(conf_lab, 0L), inc_lab = conf_lab / pop * 1e5,
+         precip_z = z(precip), temp_z = z(temp), ivs_z = z(ivs), dens_z = z(logdens),
+         linc = log(inc_conf + 1), llab = log(inc_lab + 1))
+nb <- poly2nb(muni, queen = TRUE); W <- nb2listw(nb, style = "W", zero.policy = TRUE)
+cat(sprintf("\n(B) ESPACIAL (%d municipios; %d sem caso laboratorial)\n", nrow(muni), sum(muni$conf_lab == 0)))
+for (y in c("inc_conf", "inc_lab")) {
+  set.seed(1); mc <- moran.mc(muni[[y]], W, nsim = 999, zero.policy = TRUE)
+  cat(sprintf("  Moran global %-8s I = %s (permutacao p=%s)\n", y, fmtn(mc$statistic),
+              sub("\\.", ",", sprintf("%.3f", mc$p.value))))
+}
+esp <- list()
+VARS <- c("precip_z", "temp_z", "ivs_z", "dens_z")
+for (y in c("linc", "llab")) {
+  s <- summary(errorsarlm(reformulate(VARS, response = y), data = muni, listw = W,
+                          zero.policy = TRUE))$Coef
+  cat(sprintf("  erro espacial %-4s precipitacao beta %s | IVS beta %s\n", y,
+              ic(s["precip_z", 1], s["precip_z", 2], s["precip_z", 4]),
+              ic(s["ivs_z", 1], s["ivs_z", 2], s["ivs_z", 4])))
+  esp[[y]] <- s
+}
+dg <- st_drop_geometry(muni); dg$id <- factor(seq_len(nrow(dg)))
+nbm <- nb; names(nbm) <- levels(dg$id); class(nbm) <- "nb"
+for (y in c("conf", "conf_lab")) {
+  s  <- summary(suppressWarnings(glm.nb(reformulate(c(VARS, "offset(log(pop))"), response = y),
+                                        data = dg)))$coefficients
+  sg <- summary(suppressWarnings(gam(reformulate(c(VARS, "offset(log(pop))",
+                                     "s(id, bs='mrf', xt=list(nb=nbm), k=120)"), response = y),
+                                     family = mgcv::nb(), method = "REML", data = dg)))$p.table
+  cat(sprintf("  contagem %-8s precipitacao RT BN %s | BN-ICAR %s\n", y,
+              ic(s["precip_z", 1], s["precip_z", 2], s["precip_z", 4], exp),
+              ic(sg["precip_z", 1], sg["precip_z", 2], sg["precip_z", 4], exp)))
+  esp[[paste0("bn_", y)]] <- s; esp[[paste0("icar_", y)]] <- sg
+}
+
+# ---- (C) Gradiente mesorregional ---------------------------------------------
+gm <- st_drop_geometry(muni) |> group_by(name_meso) |>
+  summarise(conf = sum(conf), lab = sum(conf_lab), noti = sum(noti), pop = sum(pop), .groups = "drop") |>
+  mutate(i_conf = conf / pop * 1e5, i_lab = lab / pop * 1e5, i_noti = noti / pop * 1e5) |>
+  arrange(desc(i_lab))
+cat("\n(C) Incidencia acumulada por 100 mil (populacao media) por mesorregiao:\n")
+print(as.data.frame(gm |> mutate(across(starts_with("i_"), ~ round(.x, 1)))))
+cat(sprintf("  Gradiente maior/menor: notificados %sx | confirmados %sx | laboratoriais %sx\n",
+            fmtn(max(gm$i_noti) / min(gm$i_noti), 1), fmtn(max(gm$i_conf) / min(gm$i_conf), 1),
+            fmtn(max(gm$i_lab) / min(gm$i_lab), 1)))
+saveRDS(list(temporal = tem, espacial = esp, gradiente = gm), "Bancos_rds/sensibilidade_laboratorial.rds")
+cat("\nSalvo: Bancos_rds/sensibilidade_laboratorial.rds\n")
