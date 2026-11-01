@@ -185,6 +185,18 @@ print(sort(table(muni$name_meso[muni$lisa_conf == "Alto-Alto"]), decreasing = TR
 uf_br <- readRDS("Bancos_rds/uf_brasil.rds") |> st_transform(st_crs(muni))
 mg_uf <- uf_br[uf_br$abbrev_state == "MG", ]
 
+# Limites das mesorregioes (dissolucao dos municipios), sobrepostos as Figuras
+# 2 e 3 para situar os aglomerados: sem eles, os municipios extensos do Alto
+# Paranaiba dominavam a leitura visual dos mapas.
+# A malha simplificada nao tem bordas coincidentes entre municipios: a uniao
+# direta deixava residuos das divisas municipais. Dilata-se ~200 m antes da
+# uniao e contrai-se depois (graus; deslocamento apenas cartografico).
+lim_meso    <- suppressWarnings(muni |> group_by(name_meso) |>
+                 summarise(geometry = st_union(st_buffer(geometry, 0.002)), .groups = "drop") |>
+                 st_buffer(-0.002)) |> st_make_valid()
+camada_meso <- geom_sf(data = lim_meso, fill = NA, color = "gray15", linewidth = 0.4,
+                       inherit.aes = FALSE)
+
 inset_brasil <- function() {
   ggplot(uf_br) +
     geom_sf(fill = "white", color = "gray55", linewidth = 0.18) +
@@ -234,6 +246,27 @@ montar_mapa <- function(mapa_principal) {
     cowplot::draw_plot(inset_brasil(),      x = 0.75, y = 0.22, width = 0.24, height = 0.40)
 }
 
+# Composicao com a legenda VERTICAL no painel lateral, ABAIXO do inset: a
+# legenda horizontal no topo (montar_mapa) invadia a borda norte do estado.
+# Usada nas Figuras 2 e 3, que ficam com o mesmo leiaute.
+montar_mapa_lateral <- function(mapa_principal) {
+  mp <- mapa_principal +
+    theme(plot.background  = element_rect(fill = "white", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          legend.position = "right", legend.direction = "vertical",
+          legend.title = element_text(size = 11, face = "bold"),
+          legend.text  = element_text(size = 10),
+          legend.key.size = unit(0.55, "cm"))
+  legenda    <- cowplot::get_legend(mp)
+  mapa_clean <- mp + theme(legend.position = "none")
+  cowplot::ggdraw() +
+    cowplot::draw_grob(grid::rectGrob(gp = grid::gpar(fill = "white", col = NA))) +
+    cowplot::draw_plot(mapa_clean,          x = 0.00, y = 0.00, width = 0.76, height = 1.00) +
+    cowplot::draw_plot(plot_rosa_ventos(),  x = 0.79, y = 0.78, width = 0.19, height = 0.20) +
+    cowplot::draw_plot(inset_brasil(),      x = 0.75, y = 0.42, width = 0.24, height = 0.34) +
+    cowplot::draw_plot(legenda,             x = 0.76, y = 0.02, width = 0.23, height = 0.38)
+}
+
 # ---- Mapas ------------------------------------------------------------------
 base_carto <- list(
   annotation_scale(location = "bl", width_hint = 0.25, style = "bar",
@@ -257,12 +290,12 @@ Figura 2 - municipios por classe de incidencia:
 print(table(muni$inc_conf_cl))
 m1 <- ggplot(muni) +
   geom_sf(aes(fill = inc_conf_cl), color = "grey85", linewidth = 0.05) +
+  camada_meso +
   scale_fill_manual(values = CORES_INC, drop = FALSE,
-                    name = "Incidência acumulada (casos/100 mil hab.)",
-                    guide = guide_legend(title.position = "top", nrow = 1)) +
-  base_carto +
-  theme(legend.key.width = unit(1.1, "cm"), legend.key.height = unit(0.4, "cm"))
-mapa_inc_conf <- montar_mapa(m1)
+                    name = "Incidência acumulada\n(casos/100 mil hab.)",
+                    guide = guide_legend(ncol = 1)) +
+  base_carto
+mapa_inc_conf <- montar_mapa_lateral(m1)
 ggsave("Resultados/Figuras/mapa_incidencia_confirmados.png", mapa_inc_conf,
        width = 10, height = 7, dpi = 1200, bg = "white")
 # Versao vetorial (PDF) exigida pela revista para graficos e mapas; cairo_pdf
@@ -344,32 +377,16 @@ biv_lisa <- function(x, y, nsim = 999) {
 muni$lisa_biv <- biv_lisa(muni$inc_conf, muni$precip)
 cat("LISA bivariado (incidencia confirmados x precipitacao):\n"); print(table(muni$lisa_biv))
 
-# Figura 3: mesmo padrao cartografico da Figura 2 (rosa dos ventos e INSET DO
-# BRASIL), porem com a legenda VERTICAL no painel lateral, ABAIXO do inset.
-# A legenda horizontal no topo (padrao de montar_mapa) invadia a borda norte
-# do estado, por isso a composicao aqui e propria em vez de reusar a funcao.
-mapa_lisa_biv <- local({
-  mp <- ggplot(muni) +
+# Figura 3: mesmo padrao cartografico e mesma composicao da Figura 2
+# (legenda vertical no painel lateral, abaixo do inset do Brasil).
+mapa_lisa_biv <- montar_mapa_lateral(
+  ggplot(muni) +
     geom_sf(aes(fill = lisa_biv), color = "grey70", linewidth = 0.05) +
-   scale_fill_manual(values = cores, name = "Cluster LISA bivariado", drop = FALSE) +
+    camada_meso +
+    scale_fill_manual(values = cores, name = "Associação local bivariada", drop = FALSE) +
     annotation_scale(location = "bl", width_hint = 0.25, style = "bar",
                      bar_cols = c("gray15","white"), text_cex = 0.8) +
-    theme_void(base_size = 11) +
-    theme(plot.background  = element_rect(fill = "white", color = NA),
-          panel.background = element_rect(fill = "white", color = NA),
-          legend.position = "right", legend.direction = "vertical",
-          legend.title = element_text(size = 11, face = "bold"),
-          legend.text  = element_text(size = 10),
-          legend.key.size = unit(0.55, "cm"))
-  legenda    <- cowplot::get_legend(mp)
-  mapa_clean <- mp + theme(legend.position = "none")
-  cowplot::ggdraw() +
-    cowplot::draw_grob(grid::rectGrob(gp = grid::gpar(fill = "white", col = NA))) +
-    cowplot::draw_plot(mapa_clean,          x = 0.00, y = 0.00, width = 0.76, height = 1.00) +
-    cowplot::draw_plot(plot_rosa_ventos(),  x = 0.79, y = 0.78, width = 0.19, height = 0.20) +
-    cowplot::draw_plot(inset_brasil(),      x = 0.75, y = 0.42, width = 0.24, height = 0.34) +
-    cowplot::draw_plot(legenda,             x = 0.76, y = 0.02, width = 0.23, height = 0.38)
-})
+    theme_void(base_size = 11))
 ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.png", mapa_lisa_biv,
        width = 10, height = 7, dpi = 1200, bg = "white")
 # Versao vetorial (PDF) exigida pela revista
