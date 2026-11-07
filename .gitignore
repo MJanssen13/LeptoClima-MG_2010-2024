@@ -5,43 +5,22 @@ Dados_brutos/dados_clima/raw/
 Dados_brutos/dados_pop/atlasivs_dadosbrutos_pt_v2.xlsx
 Dados_brutos/dados_pop/IVS-MG.csv
 
-# --- Materiais NAO relacionados a analise atual (artigo anterior, parecer etc.) ---
-repo_original/
-_artigo_tmp/
-artigo_texto.txt
-decisao_revista.txt
-dicionario_dados.txt
+# --- Materiais privados: submissao do manuscrito e historico ---
+#     Manuscrito/  texto, cartas, parecer e revisoes internas (avaliacao cega)
+#     _Arquivo/    versoes e projetos anteriores, fora do repositorio publico
+Manuscrito/
+_Arquivo/
 
-# --- Arquivos de sistema do macOS ---
-.DS_Store
-
-# --- Arquivos locais do R / RStudio ---
+# --- Arquivos locais do R / RStudio e do sistema ---
 .Rhistory
 .RData
 .Rproj.user/
 .Ruserdata/
 *.Rproj
+.DS_Store
 
 # --- Config local de ferramentas ---
 .claude/
 
-# Resposta aos revisores (cita o parecer — manter fora do repositorio publico)
-Documentos/
-RESPOSTA_AO_PARECER.md
-ARTIGO_REVISADO.md
-ARTIGO_REVISADO.docx
-ARTIGO_REVISADO.html
-CARTA_APRESENTACAO.md
-CARTA_APRESENTACAO.docx
-
-# --- Materiais de submissao (texto do manuscrito; mantidos fora do repositorio publico) ---
-Resultados/Para envio/
-Resultados/Submetido_*/
-Resultados/Textos/
-Resultados/Versao_anterior/Texto/
-
-# --- Rascunhos/depuracao locais ---
-_mark/
-
-# Arquivos temporarios/lock do Word
+# --- Temporarios/lock do Word ---
 ~$*

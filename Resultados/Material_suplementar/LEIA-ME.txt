@@ -1,0 +1,23 @@
+MATERIAL SUPLEMENTAR - versao RESS (Epidemiologia e Servicos de Saude)
+======================================================================
+
+A RESS admite ate DOIS itens suplementares, em ARQUIVO UNICO, nomeados
+"Tabela suplementar n" e "Figura suplementar n". Esta pasta contem o
+material suplementar da versao revisada do manuscrito:
+
+  MATERIAL_SUPLEMENTAR.docx
+    - Tabela suplementar 1  Caracterizacao dos casos confirmados de leptospirose.
+                            Minas Gerais, 2010-2024 (n=2.314)
+    - Figura suplementar 1  Sensibilidade, especificidade, valor preditivo positivo
+                            (VPP), falso-alarme e escore de habilidade de Heidke do
+                            gatilho de precipitacao para as semanas de surto de
+                            leptospirose. Minas Gerais, 2020-2024 (n=3.132
+                            mesorregiao-semanas)
+
+  Figura suplementar 1.png / .svg
+    - A mesma figura em arquivo separado (PNG em alta resolucao e SVG editavel),
+      gerada pelo bloco 24 de Scripts/05_sensibilidade_robustez.R.
+
+Os demais resultados de sensibilidade e robustez nao acompanham a submissao a
+RESS; podem ser reproduzidos pelos scripts deste repositorio, conforme a secao
+"Disponibilidade de dados" do manuscrito (referencia 21).

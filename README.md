@@ -15,10 +15,9 @@ camada socioambiental (IVS e saneamento).
 ```
 Scripts/                          Código R organizado por análise (5 arquivos — ver Pipeline)
 Bancos_rds/                       Bancos processados (.rds), prontos para análise
-Resultados/Figuras/               Mapas e diagramas (.png) gerados pelas análises
-Resultados/Tabelas/               Tabelas principais e suplementares (.docx)
-Resultados/Material_suplementar_RESS/  Material suplementar da submissão (arquivo único, dois itens)
-Resultados/Versao_anterior/       Materiais de uma formatação anterior do manuscrito (histórico)
+Resultados/Figuras/               Figuras geradas pelas análises (.png; as do artigo também em .pdf e .svg)
+Resultados/Tabelas/               Tabelas principais (.docx) e lista de municípios em aglomerado (.csv)
+Resultados/Material_suplementar/  Material suplementar do manuscrito (arquivo único, dois itens)
 Dados_brutos/                     Dados brutos (parcialmente versionados — ver "Fontes de dados")
 ```
 
