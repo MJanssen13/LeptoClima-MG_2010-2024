@@ -302,6 +302,10 @@ ggsave("Resultados/Figuras/mapa_incidencia_confirmados.png", mapa_inc_conf,
 # embute as fontes, evitando substituicao no sistema de submissao.
 ggsave("Resultados/Figuras/mapa_incidencia_confirmados.pdf", mapa_inc_conf,
        width = 10, height = 7, device = cairo_pdf, bg = "white")
+# SVG editavel (texto como texto), aceito pela diagramacao da revista ao lado
+# do PDF; svglite grava as fontes por nome, sem converter texto em curvas.
+ggsave("Resultados/Figuras/mapa_incidencia_confirmados.svg", mapa_inc_conf,
+       width = 10, height = 7, device = svglite::svglite, bg = "white")
 
 # Mapa 2 - clusters LISA (confirmados)
 cores <- c("Alto-Alto" = "#d7191c", "Baixo-Baixo" = "#2c7bb6", "Alto-Baixo" = "#fdae61",
@@ -392,6 +396,10 @@ ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.png", mapa_lisa_biv,
 # Versao vetorial (PDF) exigida pela revista
 ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.pdf", mapa_lisa_biv,
        width = 10, height = 7, device = cairo_pdf, bg = "white")
+# SVG editavel (texto como texto), aceito pela diagramacao da revista ao lado
+# do PDF; svglite grava as fontes por nome, sem converter texto em curvas.
+ggsave("Resultados/Figuras/mapa_lisa_bivariado_precip.svg", mapa_lisa_biv,
+       width = 10, height = 7, device = svglite::svglite, bg = "white")
 
 saveRDS(muni, "Bancos_rds/dados_espaciais_municipal.rds")
 cat("\nMapas extras salvos em Resultados/Figuras/:\n",

@@ -218,4 +218,8 @@ ggsave("Resultados/Figuras/fig_serie_temporal.png", g, width = 10, height = 5, d
 # embute as fontes, evitando substituicao no sistema de submissao.
 ggsave("Resultados/Figuras/fig_serie_temporal.pdf", g, width = 10, height = 5,
        device = cairo_pdf, bg = "white")
+# SVG editavel (texto como texto), aceito pela diagramacao da revista ao lado
+# do PDF; svglite grava as fontes por nome, sem converter texto em curvas.
+ggsave("Resultados/Figuras/fig_serie_temporal.svg", g, width = 10, height = 5,
+       device = svglite::svglite, bg = "white")
 cat("Figura salva: Resultados/Figuras/fig_serie_temporal.png\n")

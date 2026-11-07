@@ -554,7 +554,11 @@ va <- readRDS("Bancos_rds/validacao_alerta.rds")
 # as demais metricas sao proporcoes. Por isso o eixo y traz duas leituras da
 # MESMA posicao: proporcao (%) a esquerda e escore (decimal) a direita.
 HEIDKE <- "Escore de Heidke"
-pct  <- scales::label_percent(accuracy = 1, decimal.mark = ",")   # proporcoes
+# Norma da revista: percentuais com uma casa decimal. Os rotulos das barras saem
+# em % com uma casa; o eixo mostra a escala em pontos percentuais (0 a 100), sem
+# o simbolo, que fica no titulo do eixo.
+pct  <- scales::label_percent(accuracy = 0.1, decimal.mark = ",") # rotulos (proporcoes)
+eixo_pct <- scales::label_number(scale = 100, accuracy = 1)        # eixo, 0 a 100
 esc0 <- scales::label_number(accuracy = 0.01, decimal.mark = ",") # escore (adimensional)
 eixo_heidke <- sec_axis(~ ., name = "Escore de Heidke (adimensional)",
                         breaks = seq(0, 1, 0.25), labels = esc0)
@@ -565,13 +569,13 @@ colnames(L) <- c("lead", "sens", "far", "hss")
 dA <- as.data.frame(L) |>
   pivot_longer(c(sens, far, hss), names_to = "metrica", values_to = "valor") |>
   mutate(metrica = recode(metrica,
-                          sens = "Sensibilidade", far = "Taxa de falso-alarme", hss = HEIDKE),
-         metrica = factor(metrica, levels = c("Taxa de falso-alarme", "Sensibilidade", HEIDKE)))
+                          sens = "Sensibilidade", far = "Falso-alarme", hss = HEIDKE),
+         metrica = factor(metrica, levels = c("Falso-alarme", "Sensibilidade", HEIDKE)))
 gA <- ggplot(dA, aes(lead, valor, color = metrica)) +
   geom_line(linewidth = 0.8) + geom_point(size = 2) +
   scale_color_manual(values = setNames(c(VERM, AZUL, VERDE),
-                       c("Taxa de falso-alarme", "Sensibilidade", HEIDKE))) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = pct,
+                       c("Falso-alarme", "Sensibilidade", HEIDKE))) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = eixo_pct,
                      sec.axis = eixo_heidke) +
   scale_x_continuous(breaks = 0:4) +
   labs(title = "(A) Desempenho por defasagem do gatilho",
@@ -593,15 +597,19 @@ gB <- ggplot(dB, aes(metrica, valor, fill = gatilho)) +
   geom_text(aes(label = rotulo),
             position = position_dodge(0.75), vjust = -0.4, size = 2.7) +
   scale_fill_manual(values = c("Chuva 4 SE > p80" = AZUL, "Chuva 4 SE > p90" = CINZA)) +
-  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = pct,
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25), labels = eixo_pct,
                      sec.axis = eixo_heidke) +
-  labs(title = "(B) Métricas no teste (2020–2024), gatilho a 2 semanas epidemiológicas (SE)",
+  labs(title = "(B) Métricas no teste (2020-2024), gatilho a 2 semanas epidemiológicas (SE)",
        x = "Métrica (VPP = valor preditivo positivo)", y = "Proporção (%)", fill = NULL) +
   tema + theme(axis.text.x = element_text(angle = 20, hjust = 1))
 
 # Sem titulo embutido: a legenda da figura vai no texto do material suplementar.
 g2 <- gA / gB
 ggsave("Resultados/Figuras/fig_validacao_alerta.png", g2, width = 9, height = 8.5, dpi = 1200)
+# SVG editavel (texto como texto), aceito pela diagramacao da revista ao lado
+# do PDF; svglite grava as fontes por nome, sem converter texto em curvas.
+ggsave("Resultados/Figuras/fig_validacao_alerta.svg", g2, width = 9, height = 8.5,
+       device = svglite::svglite, bg = "white")
 cat("Salvo: fig_validacao_alerta.png\n")
 
 # =============================================================================
