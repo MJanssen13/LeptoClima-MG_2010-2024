@@ -1547,3 +1547,191 @@ cat(sprintf("  Gradiente maior/menor: notificados %sx | confirmados %sx | labora
             fmtn(max(gm$i_lab) / min(gm$i_lab), 1)))
 saveRDS(list(temporal = tem, espacial = esp, gradiente = gm), "Bancos_rds/sensibilidade_laboratorial.rds")
 cat("\nSalvo: Bancos_rds/sensibilidade_laboratorial.rds\n")
+
+# -----------------------------------------------------------------------------
+# [bloco: 34_numeros_do_texto.R]
+# -----------------------------------------------------------------------------
+# =============================================================================
+# NUMEROS CITADOS NO RESUMO E NOS RESULTADOS (versao revisada do manuscrito)
+#   Reune, na grafia do texto (virgula decimal, IC95% com ponto e virgula,
+#   valor-p com tres casas), cada numero citado no Resumo e nos Resultados,
+#   indicando o bloco que o produz. A maior parte vem dos objetos salvos pelos
+#   blocos anteriores; sao recalculados aqui os numeros acrescentados na revisao
+#   que nao eram impressos nessa forma:
+#     - IC95% da incidencia acumulada estadual (Poisson exato);
+#     - pico anual da incidencia (ano e numero de casos);
+#     - IC95% e valor-p do modelo de erro espacial na escala nao transformada;
+#     - IC95% do modelo binomial negativo com componente espacial (ICAR); o beta
+#       dos notificados, 0,10498, arredonda para 0,10 (o bloco 30 imprime 0,105);
+#     - I de Moran dos residuos da Binomial Negativa nao espacial;
+#     - variacao do AIC ao incluir o IVS ou o indice censitario (bloco 32);
+#     - gradiente regional (maior/menor incidencia) nos confirmados e notificados;
+#     - percentuais do alerta com uma casa decimal.
+#   Os modelos temporais (BN, Poisson, sazonal) sao reajustados para extrair o
+#   parametro de dispersao, a razao de verossimilhancas e a autocorrelacao dos
+#   residuos; as estimativas coincidem com as do script 02 e do bloco 19.
+# Entradas: Bancos_rds/ (saidas dos scripts 01-04 e dos blocos 18-33)
+# Saidas  : console + Resultados/numeros_do_texto.txt
+# =============================================================================
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+suppressMessages({library(dplyr); library(lubridate); library(MASS); library(sf); library(spdep)})
+rd  <- function(f) readRDS(file.path("Bancos_rds", f))
+nf  <- function(x, d = 1) formatC(unname(x), format = "f", digits = d, decimal.mark = ",", big.mark = ".")
+ni  <- function(x) formatC(as.integer(round(unname(x))), format = "d", big.mark = ".", decimal.mark = ",")
+neg <- function(s) gsub("-", "\u2212", s, fixed = TRUE)          # sinal de menos tipografico
+ic  <- function(e, lo, hi, d = 2) neg(sprintf("%s; IC95%% %s; %s", nf(e, d), nf(lo, d), nf(hi, d)))
+pv  <- function(p) ifelse(p < 0.001, "p-valor<0,001", paste0("p-valor ", nf(p, 3)))
+pct <- function(x, d = 1) paste0(nf(100 * x, d), "%")
+ic_str <- function(s) {                        # "1.31 (1.22-1.41)***" -> 1,31; IC95% 1,22; 1,41
+  v <- as.numeric(regmatches(s, gregexpr("[0-9]+\\.[0-9]+", s))[[1]]); ic(v[1], v[2], v[3]) }
+br  <- function(cc, v) {                       # beta por DP (IC95%) e valor-p de uma matriz de coeficientes
+  s <- cc[v, ]; paste0(ic(s[1], s[1] - 1.96 * s[2], s[1] + 1.96 * s[2]), "; ", pv(s[4])) }
+num <- function(x) as.numeric(sub(",", ".", x, fixed = TRUE))
+saida <- character(0)
+diz <- function(secao, rotulo, valor, origem) {
+  l <- sprintf("  %-58s %s   [%s]", rotulo, valor, origem)
+  if (!secao %in% attr(diz, "vistas")) { cat("\n==", secao, "==\n"); saida <<- c(saida, "", paste("==", secao, "==")) }
+  attr(diz, "vistas") <<- unique(c(attr(diz, "vistas"), secao))
+  cat(l, "\n"); saida <<- c(saida, l)
+}
+attr(diz, "vistas") <- character(0)
+
+base <- rd("base_MG_2010_2024.rds"); pop <- rd("pop_municipal_2010_2024.rds")
+t1 <- read.csv("Bancos_rds/tabela1.csv", fileEncoding = "UTF-8")
+t2 <- read.csv("Bancos_rds/tabela2.csv", fileEncoding = "UTF-8")
+
+# ---- Paragrafo 1: casos e incidencia acumulada ------------------------------
+S <- "Resultados, par. 1 - casos e incidencia acumulada"
+nn <- sum(t1$Notificados); nc <- sum(t1$Casos)
+pm <- pop |> group_by(ano) |> summarise(p = sum(pop), .groups = "drop") |> pull(p) |> mean()
+ci <- poisson.test(nc)$conf.int / pm * 1e5
+diz(S, "notificados | confirmados (% confirmados)", sprintf("%s | %s (%s)", ni(nn), ni(nc), pct(nc / nn)), "script 04, Tabela 1")
+diz(S, "incidencia acumulada /100 mil (IC95% Poisson exato)", ic(nc / pm * 1e5, ci[1], ci[2], 1), "bloco 34")
+
+# ---- Paragrafo 2: tendencia e sazonalidade ----------------------------------
+S <- "Resultados, par. 2 - tendencia anual e sazonalidade"
+ta <- rd("tendencia_anual.rds"); sc <- ta$serie_conf; k <- which.max(sc$inc)
+diz(S, "Mann-Kendall incidencia confirmada (tau; p)", sprintf("%s; %s", nf(ta$mk_inc_conf["tau"], 2), pv(ta$mk_inc_conf["p"])), "bloco 25")
+diz(S, "incidencia 2010 -> 2024 (/100 mil)", sprintf("%s -> %s", nf(sc$inc[sc$ano == 2010]), nf(sc$inc[sc$ano == 2024])), "bloco 25")
+diz(S, "pico anual: incidencia (ano; casos)", sprintf("%s (%d; %d casos)", nf(sc$inc[k]), sc$ano[k], sc$n[k]), "bloco 34")
+diz(S, "Mann-Kendall notificados (tau; p)", sprintf("%s; %s", nf(ta$mk_inc_noti["tau"], 2), pv(ta$mk_inc_noti["p"])), "bloco 25")
+diz(S, "Mann-Kendall taxa de confirmacao (tau; p)", sprintf("%s; %s", nf(ta$mk_taxa_conf["tau"], 2), pv(ta$mk_taxa_conf["p"])), "bloco 25")
+cf <- base[base$confirmado %in% TRUE, ]
+diz(S, "casos com inicio de sintomas em janeiro-marco", pct(mean(month(as.Date(cf$DT_SIN_PRI)) %in% 1:3, na.rm = TRUE)), "script 04")
+
+# ---- Paragrafo 3: modelo temporal -------------------------------------------
+S <- "Resultados, par. 3 - modelo temporal (Binomial Negativa)"
+dt <- rd("dados_temporais.rds")
+d <- dt |> filter(is.finite(pr_l2), is.finite(t_l2), pop > 0) |>
+  mutate(pr_z = as.numeric(scale(pr_l2)), t_z = as.numeric(scale(t_l2)),
+         meso = factor(name_meso), yr = ano - 2017, mes = factor(month(sem_ini)))
+rti <- function(m, v) { s <- summary(m)$coefficients[v, ]; ic(exp(s[1]), exp(s[1] - 1.96 * s[2]), exp(s[1] + 1.96 * s[2])) }
+ac1 <- function(m) {
+  x <- data.frame(meso = d$meso, s = d$sem_ini, r = residuals(m, type = "pearson")) |>
+    arrange(meso, s) |> group_by(meso) |> mutate(r1 = dplyr::lag(r)) |> ungroup() |> filter(!is.na(r1))
+  cor(x$r, x$r1) }
+fb <- function(y, extra = NULL) suppressWarnings(glm.nb(reformulate(c("pr_z", "t_z", "meso", "yr", extra, "offset(log(pop))"), response = y), data = d))
+mc_ <- fb("conf"); mn_ <- fb("noti"); ms_ <- fb("conf", "mes")
+mp_ <- glm(conf ~ pr_z + t_z + meso + yr + offset(log(pop)), family = poisson, data = d)
+lr <- 2 * (as.numeric(logLik(mc_)) - as.numeric(logLik(mp_)))
+diz(S, "dispersao theta | razao de verossimilhancas BN x Poisson", sprintf("%s | %s; %s", nf(mc_$theta, 2), nf(lr, 1), pv(pchisq(lr, 1, lower.tail = FALSE))), "script 02")
+diz(S, "RTI precipitacao, confirmados", rti(mc_, "pr_z"), "script 02, Tabela 2")
+diz(S, "RTI temperatura, confirmados", rti(mc_, "t_z"), "script 02, Tabela 2")
+diz(S, "RTI precipitacao, notificados", rti(mn_, "pr_z"), "script 02, Tabela 2")
+diz(S, "RTI temperatura, notificados", rti(mn_, "t_z"), "script 02, Tabela 2")
+diz(S, "RTI precipitacao com ajuste sazonal", rti(ms_, "pr_z"), "bloco 19")
+diz(S, "autocorrelacao lag 1 dos residuos (sem | com sazonalidade)", sprintf("%s | %s", nf(ac1(mc_), 2), nf(ac1(ms_), 2)), "script 02")
+ir <- rd("ic_robustos.rds")
+diz(S, "RTI precipitacao, GEE AR(1)", ic_str(ir$gee["precip"]), "bloco 22")
+diz(S, "RTI precipitacao, EP robusto por mesorregiao", ic_str(ir$cl_meso["precip"]), "bloco 22")
+bc <- rd("binomial_confirmacao.rds")$or_precip
+diz(S, "razao de chances de confirmacao, precipitacao", ic(bc["or"], bc["lo"], bc["hi"]), "bloco 29")
+sen <- rd("sensibilidade.rds"); est <- sen$est
+k4 <- suppressWarnings(cor.test(est$inc4, est$pr4_l2, method = "kendall"))$estimate
+diz(S, "Kendall 4 SE, estado", nf(k4, 2), "bloco 18")
+for (m in c("Metropolitana de Belo Horizonte", "Sul/Sudoeste de Minas", "Zona da Mata"))
+  diz(S, paste("Kendall 4 SE,", m), sub(" .*", "", t1$Kendall_4SE[t1$Mesorregiao == m]), "script 04, Tabela 1")
+
+# ---- Paragrafo 4: incidencia por mesorregiao --------------------------------
+S <- "Resultados, par. 4 - incidencia por mesorregiao"
+for (m in c("Sul/Sudoeste de Minas", "Zona da Mata", "Metropolitana de Belo Horizonte", "Norte de Minas", "Jequitinhonha")) {
+  r <- t1[t1$Mesorregiao == m, ]
+  diz(S, paste("incidencia /100 mil (casos),", m), sprintf("%s (n=%s)", r$Incidencia_100mil, ni(r$Casos)), "script 04, Tabela 1")
+}
+
+# ---- Paragrafo 5: autocorrelacao espacial -----------------------------------
+S <- "Resultados, par. 5 - Moran global, bivariado e LISA"
+mu <- rd("dados_espaciais_municipal.rds"); sf_use_s2(FALSE)
+W <- nb2listw(poly2nb(mu, queen = TRUE), style = "W", zero.policy = TRUE)
+for (y in c("noti", "conf")) {
+  set.seed(1); mm <- moran.mc(mu[[paste0("inc_", y)]], W, nsim = 999, zero.policy = TRUE)
+  diz(S, paste("I de Moran (999 permutacoes),", y), sprintf("%s; p-valor %s", nf(mm$statistic, 2), nf(mm$p.value, 3)), "script 03")
+}
+for (v in c("Precipita\u00e7\u00e3o", "Umidade relativa", "Temperatura", "Evapotranspira\u00e7\u00e3o", "IVS"))
+  diz(S, paste("Moran bivariado, confirmados x", c("precipitacao", "umidade", "temperatura", "evapotranspiracao", "IVS")[match(v, c("Precipita\u00e7\u00e3o", "Umidade relativa", "Temperatura", "Evapotranspira\u00e7\u00e3o", "IVS"))]), neg(t2$Moran_confirmados[t2$Variavel == v]), "script 03, Tabela 2")
+lb <- rd("lisa_bh.rds")
+diz(S, "LISA Alto-Alto confirmados (bruto | Benjamini-Hochberg)", sprintf("%d | %d", lb$univariado$analitico["AA_bruto"], lb$univariado$analitico["AA_bh"]), "bloco 31")
+bb <- st_drop_geometry(mu)[mu$lisa_noti == "Baixo-Baixo", ]
+diz(S, "LISA Baixo-Baixo notificados (no Norte de Minas)", sprintf("%d (%d)", nrow(bb), sum(bb$name_meso == "Norte de Minas")), "script 03")
+diz(S, "LISA bivariado Alto-Alto (bruto | Benjamini-Hochberg)", sprintf("%d | %d", lb$bivariado$global999["AA_bruto"], lb$bivariado$global999["AA_bh"]), "bloco 31")
+
+# ---- Paragrafo 6: confirmacao e modelo de erro espacial ---------------------
+S <- "Resultados, par. 6 - taxa de confirmacao e modelo de erro espacial"
+tl <- rd("confirmacao_laboratorial.rds")
+diz(S, "taxa de confirmacao, menor -> maior", sprintf("%s (%s) -> %s (%s)", pct(min(tl$tx_conf) / 100), tl$name_meso[which.min(tl$tx_conf)],
+                                                   pct(max(tl$tx_conf) / 100), tl$name_meso[which.max(tl$tx_conf)]), "bloco 27")
+diz(S, "confirmacao laboratorial, menor -> maior", sprintf("%s -> %s", pct(min(tl$tx_lab) / 100), pct(max(tl$tx_lab) / 100)), "bloco 27")
+ic_ <- num(t1$Incidencia_100mil); in_ <- num(t1$Incidencia_notif_100mil)
+diz(S, "gradiente regional da incidencia, confirmados | notificados",
+    sprintf("%s | %s vezes", nf(max(ic_) / min(ic_)), nf(max(in_) / min(in_))), "bloco 34, Tabela 1")
+cc <- rd("confirmacao_covariavel.rds")
+diz(S, "Moran da incidencia log, confirmados: bruto -> ajustado", sprintf("%s -> %s", nf(moran.test(log(mu$inc_conf + 1), W, zero.policy = TRUE)$estimate[1], 2), nf(as.numeric(sub(" .*", "", cc$moran["conf_adj"])), 2)), "bloco 20")
+diz(S, "Moran da incidencia log, notificados: bruto -> ajustado", sprintf("%s -> %s", nf(moran.test(log(mu$inc_noti + 1), W, zero.policy = TRUE)$estimate[1], 2), nf(as.numeric(sub(" .*", "", cc$moran["noti_adj"])), 2)), "bloco 20")
+diz(S, "erro espacial, confirmados com confirmacao: precipitacao", br(cc$sem1, "precip_z"), "bloco 20")
+diz(S, "erro espacial, notificados com confirmacao: precipitacao", br(cc$semN, "precip_z"), "bloco 20")
+diz(S, "erro espacial, confirmados: taxa de confirmacao", br(cc$sem1, "pconf_z"), "bloco 20")
+diz(S, "erro espacial, notificados: taxa de confirmacao", br(cc$semN, "pconf_z"), "bloco 20")
+diz(S, "erro espacial, confirmados com confirmacao: IVS", br(cc$sem1, "ivs_z"), "bloco 20")
+diz(S, "erro espacial, notificados com confirmacao: IVS", br(cc$semN, "ivs_z"), "bloco 20")
+
+# ---- Paragrafo 7: sensibilidade ---------------------------------------------
+S <- "Resultados, par. 7 - analises de sensibilidade"
+ia <- sen$incA
+diz(S, "incidencia por macrorregiao de saude, menor -> maior", sprintf("%s (%s) -> %s (%s)", nf(min(ia$inc)), ia$macro[which.min(ia$inc)], nf(max(ia$inc)), ia$macro[which.max(ia$inc)]), "bloco 18")
+cat("  (RTI por macrorregiao de saude e sem defasagem: impressas no bloco 18, 'IRR (BN, por DP)')\n")
+saida <- c(saida, "  (RTI por macrorregiao de saude e sem defasagem: impressas no bloco 18, 'IRR (BN, por DP)')")
+ml0 <- suppressWarnings(glm.nb(conf ~ pr_z + t_z + meso + yr + offset(log(pop)),
+         data = dt |> filter(is.finite(pr), is.finite(tmean), pop > 0) |>
+           mutate(pr_z = as.numeric(scale(pr)), t_z = as.numeric(scale(tmean)), meso = factor(name_meso), yr = ano - 2017)))
+diz(S, "RTI precipitacao sem defasagem (mesorregiao)", rti(ml0, "pr_z"), "bloco 18")
+sr <- rd("analises_complementares.rds")$sem_raw
+diz(S, "erro espacial, escala nao transformada: precipitacao", br(sr, "precip_z"), "bloco 19")
+eb <- rd("espacial_binomial_negativa.rds")
+bn_ic <- function(x) ic(x["b"], x["b"] - 1.96 * x["se"], x["b"] + 1.96 * x["se"])
+dd <- st_drop_geometry(mu) |> mutate(precip_z = as.numeric(scale(precip)), temp_z = as.numeric(scale(temp)),
+                                     ivs_z = as.numeric(scale(ivs)), dens_z = as.numeric(scale(logdens)))
+mb <- suppressWarnings(glm.nb(conf ~ precip_z + temp_z + ivs_z + dens_z + offset(log(pop)), data = dd))
+set.seed(1); mr <- moran.mc(residuals(mb, type = "pearson"), W, nsim = 999, zero.policy = TRUE)
+diz(S, "I de Moran dos residuos: BN nao espacial -> ICAR (confirmados)", sprintf("%s -> %s", neg(nf(mr$statistic, 2)), neg(nf(eb$conf_ICAR_moran["I"], 2))), "blocos 30 e 34")
+diz(S, "BN espacial ICAR, precipitacao: confirmados", bn_ic(eb$conf_ICAR_precip_z), "bloco 30")
+diz(S, "BN espacial ICAR, precipitacao: notificados", bn_ic(eb$noti_ICAR_precip_z), "bloco 30")
+ei <- rd("estabilidade_ivs.rds"); z <- function(x) as.numeric(scale(x))
+diz(S, "indice censitario 2010 x 2022 (Spearman)", nf(cor(ei$vul10, ei$vul22, method = "spearman"), 2), "bloco 32")
+a0 <- AIC(glm.nb(conf ~ z(precip) + z(temp) + z(logdens) + offset(log(pop)), data = ei))
+da <- sapply(c(vul22 = "vul22", vul10 = "vul10", ivs = "ivs"), function(v)
+  AIC(glm.nb(as.formula(sprintf("conf ~ z(precip)+z(temp)+z(%s)+z(logdens)+offset(log(pop))", v)), data = ei)) - a0)
+diz(S, "variacao do AIC: indice censitario 2022 | 2010 | IVS", neg(sprintf("%+.1f | %+.1f | %+.1f", da["vul22"], da["vul10"], da["ivs"]) |> gsub(pattern = ".", replacement = ",", fixed = TRUE)), "bloco 34")
+
+# ---- Paragrafo 8: alerta ----------------------------------------------------
+S <- "Resultados, par. 8 - validacao do alerta"
+va <- rd("validacao_alerta.rds")
+diz(S, "p80: sensibilidade | VPP | Heidke", sprintf("%s | %s | %s", pct(va$p80$sens), pct(va$p80$ppv), nf(va$p80$hss, 2)), "bloco 21")
+diz(S, "p90: sensibilidade | especificidade", sprintf("%s | %s", pct(va$p90$sens), pct(va$p90$spec)), "bloco 21")
+
+# ---- Resumo: IVS sem ajuste pela confirmacao --------------------------------
+S <- "Resumo - IVS no modelo de erro espacial (sem a taxa de confirmacao)"
+diz(S, "erro espacial, confirmados: IVS", br(cc$sem0, "ivs_z"), "bloco 20")
+
+writeLines(c("Numeros citados no Resumo e nos Resultados (gerado pelo bloco 34 do script 05)",
+             saida), "Resultados/numeros_do_texto.txt", useBytes = FALSE)
+cat("\nSalvo: Resultados/numeros_do_texto.txt\nNUMEROS_OK\n")
